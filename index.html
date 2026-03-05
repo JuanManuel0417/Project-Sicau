@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>SICAU - Inicio de Sesión</title>
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+<!-- TU CSS -->
+<link rel="stylesheet" href="assets/css/styleIndex.css">
+</head>
+
+<body>
+
+<video autoplay muted loop id="videoFondo">
+    <source src="assets/video/Unlock.mp4" type="video/mp4">
+</video>
+
+<div class="login-wrapper">
+
+<h2>Inicio de sesión</h2>
+
+<img id="ImagenDeUsuario" class="img-usuario"
+src="assets/img/usuario.png">
+
+<form>
+
+<div class="input-group">
+    <input type="text" id="usuario" class="form-control" placeholder="Usuario">
+    <span class="input-group-addon">@pascualbravo.edu.co</span>
+</div>
+
+<div class="password-box">
+    <input type="password" id="password" class="form-control pwd" placeholder="Contraseña">
+    <span class="glyphicon glyphicon-eye-close verContrasenia"></span>
+</div>
+
+<button type="submit" class="btn-login">Ingresar</button>
+
+</form>
+
+<div class="links">
+<a href="#">¿Olvidaste tu Usuario?</a>
+<a href="#">¿Olvidaste tu contraseña?</a>
+</div>
+
+<div class="bottom-links">
+<div>
+<span class="glyphicon glyphicon-list-alt"></span>
+<span>Inscripciones</span>
+</div>
+<div>
+<span class="glyphicon glyphicon-education"></span>
+<span>Aplicaciones</span>
+</div>
+<div>
+<span class="glyphicon glyphicon-search"></span>
+<span>Otros...</span>
+</div>
+</div>
+
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+<!-- TU JS -->
+<script src="assets/js/scriptUnlock.js"></script>
+
+</body>
+</html>
