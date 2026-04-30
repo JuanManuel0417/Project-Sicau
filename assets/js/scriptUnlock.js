@@ -1,42 +1,32 @@
-$(function(){
-
-    // Mostrar / ocultar contraseña
-    $('.verContrasenia').click(function(){
-
+$(function () {
+    $('.verContrasenia').click(function () {
         var $pwd = $('#password');
         var $icon = $(this);
-
-        if($pwd.attr('type') === 'password'){
-            $pwd.attr('type','text');
-            $icon.removeClass('glyphicon-eye-close')
-                 .addClass('glyphicon-eye-open');
-        }else{
-            $pwd.attr('type','password');
-            $icon.removeClass('glyphicon-eye-open')
-                 .addClass('glyphicon-eye-close');
+        if ($pwd.attr('type') === 'password') {
+            $pwd.attr('type', 'text');
+            $icon.removeClass('glyphicon-eye-close').addClass('glyphicon-eye-open');
+        } else {
+            $pwd.attr('type', 'password');
+            $icon.removeClass('glyphicon-eye-open').addClass('glyphicon-eye-close');
         }
-
     });
 
-    // Login
-    $('form').submit(function(e){
+    $('form').submit(function (e) {
         e.preventDefault();
 
-        let usuario = $('#usuario').val();
+        let usuarioRaw = $('#usuario').val(); 
         let password = $('#password').val();
 
-        if(usuario.trim() !== "" && password.trim() !== ""){
+        if (usuarioRaw.trim() !== "" && password.trim() !== "") {
+            
+            let usuarioLimpio = usuarioRaw.replace(/[0-9.]/g, ' ').replace(/\s+/g, ' ').trim();
 
-            // Guardar usuario
-            localStorage.setItem("usuarioActivo", usuario);
+            localStorage.setItem("usuarioOriginal", usuarioRaw.toLowerCase()); // esneider.gonzalez467
+            localStorage.setItem("usuarioLimpio", usuarioLimpio.toUpperCase()); // ESNEIDER GONZALEZ
 
-            // Ir al lobby
             window.location.href = "pages/lobby.html";
-
         } else {
-            alert("Complete todos los campos");
+            alert("Por favor, complete todos los campos");
         }
-
     });
-
 });
