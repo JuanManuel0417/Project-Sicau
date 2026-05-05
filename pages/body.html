@@ -1,15 +1,749 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
+
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BODY</title>
-    <!-- Custom styles and scripts -->
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <title>SICAU - Estudiante | Proyecto Académico</title>
+    <link rel="icon" type="image/x-icon" href="../assets/img/iupb.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
     <link rel="stylesheet" href="../assets/css/styleBody.css">
+
 </head>
+
 <body>
-    <h1>Holaaaa</h1>
+
+     <div class="header-wrapper">
+        <div class="top-bar">
+            <a href="http://www.pascualbravo.edu.co/" class="web-btn" target="_blank">
+                Web Institucional
+            </a>
+
+            <div class="user-line">
+                <span class="glyphicon glyphicon-user"></span>
+                <span id="usuarioNombre"></span>
+            </div>
+
+            <div class="logout-line">
+                <span class="glyphicon glyphicon-log-out"></span>
+                <a href="../index.html">Cerrar sesión</a>
+            </div>
+        </div>
+
+        <div class="logos-container">
+            <img src="../assets/img/pascual_header.png" class="logo-pascual" alt="Pascual Bravo"
+                onerror="this.src='https://via.placeholder.com/200x105?text=Pascual+Bravo'">
+            <img src="../assets/img/sicauLogo.png" class="logo-sicau" alt="SICAU"
+                onerror="this.src='https://via.placeholder.com/150x95?text=SICAU'">
+        </div>
+    </div>
+
+    <div class="nav-wrapper">
+        <nav class="navbar navbar-inverse">
+            <div class="container">
+                <ul class="nav navbar-nav navCenter">
+                    <li><a href="lobby.html">Inicio</a></li>
+                    <li><a href="body.html" class="active">Estudiantes</a></li>
+                    <li><a href="#">Extensión</a></li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+
+    <section class="body-content">
+        <h2 class="estudiante-titulo">Estudiantes</h2>
+
+        <div class="estudiante-header">
+            <div class="estudiante-nombre"></div>
+
+            <div class="estudiante-programa">
+                018 - INGENIERÍA DE SOFTWARE (Presencial) SNIES 107276 | JORNADA: JORNADA ÚNICA
+            </div>
+        </div>
+
+        <br />
+
+        <div class="row rowTablas">
+            <table class="table tablaSinBordes">
+                <thead class="table-azul">
+                    <tr>
+                        <th class="text-center" colspan="4">RESERVAS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><a href="#" class="btn btn-default btn-circle btn-xl"><i class="fas fa-tags"></i></a>
+                            <h5>Reserva de módulos</h5>
+                        </td>
+                        <td><a href="#" class="btn btn-success btn-circle btn-xl"><i
+                                    class="far fa-calendar-alt"></i></a>
+                            <h5>Mis reservas de módulos</h5>
+                        </td>
+                        <td><a href="#" class="btn btn-info btn-circle btn-xl"><i class="far fa-calendar-alt"></i></a>
+                            <h5>Mis reservas de espacios</h5>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="row rowTablas">
+            <table class="table tablaSinBordes">
+                <thead class="encabezadoTablas">
+                    <tr>
+                        <th class="text-center" colspan="5">INFORMACIÓN E INSCRIPCIONES</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><a href="load.html" class="btn btn-primary btn-circle btn-xl verDatosPersonales"><i
+                                    class="fa fa-user"></i></a>
+                            <h5>Datos personales</h5>
+                        </td>
+                        <td><a href="#" class="btn btn-info btn-circle btn-xl"><i class="fa fa-check"></i></a>
+                            <h5>Inscripción a procesos</h5>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><a href="#" class="btn btn-default btn-circle btn-xl"><i class="fas fa-dollar-sign"></i></a>
+                            <h5>Inscripción a apoyos socioeconómicos</h5>
+                        </td>
+                        <td><a href="#" class="btn btn-success btn-circle btn-xl"><i
+                                    class="fas fa-graduation-cap"></i></a>
+                            <h5>Inscripción trabajo de grado</h5>
+                        </td>
+                        <td><a href="#" class="btn btn-primary btn-circle btn-xl"><i class="fas fa-id-card"></i></a>
+                            <h5>Hoja de vida</h5>
+                        </td>
+                        <td><a href="#" class="btn btn-primary btn-circle btn-xl"><i
+                                    class="fas fa-arrow-alt-circle-left"></i></a>
+                            <h5>Ingresar a Bibliotecas</h5>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><a href="#" class="btn btn-warning btn-circle btn-xl"><i
+                                    class="far fa-calendar-alt"></i></a>
+                            <h5>Calendario académico</h5>
+                        </td>
+                        <td><a href="#" class="btn btn-info btn-circle btn-xl"><i class="fas fa-id-card"></i></a>
+                            <h5>Mis insignias digitales</h5>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="row rowTablas">
+            <table class="table tablaSinBordes">
+                <thead class="encabezadoTablas">
+                    <tr>
+                        <th class="text-center" colspan="6">REGISTRO ACADÉMICO</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><a href="#" class="btn btn-info btn-circle btn-xl"><i class="far fa-sticky-note"></i></a>
+                            <h5>Notas</h5>
+                        </td>
+                        <td><a href="#" class="btn btn-danger btn-circle btn-xl"><i class="fa fa-ban"></i></a>
+                            <h5>Cancelar asignaturas</h5>
+                        </td>
+                        <td><a href="#" class="btn btn-default btn-circle btn-xl"><i class="fas fa-newspaper"></i></a>
+                            <h5>Malla curricular</h5>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div id="Programa" class="row rowTablas">
+            <table id="TableProgramasDeEstudiante" class="table table-responsive table-striped"
+                style="background:white; border-radius:10px;">
+                <thead>
+                    <tr>
+                        <td class="table-azul" colspan="3"><label>PROGRAMAS</label></td>
+                    </tr>
+                    <tr class="text-left">
+                        <th><label></label></th>
+                        <th><label>Programa</label></th>
+                        <th><label>Plan</label></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr data-id="154">
+                        <td width="1%"><input class="elegirPrograma" name="ElegirPrograma" type="radio" checked /></td>
+                        <td class="programa">018 - INGENIERÍA DE SOFTWARE (Presencial) SNIES 107276 | JORNADA: JORNADA
+                            ÚNICA</td>
+                        <td>20261</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="row rowTablas">
+            <ul class="nav nav-pills nav-justified" id="TabList">
+                <li role="presentation" class="active"><a class="tab_a" href="#PorPeriodo" data-toggle="tab">Por
+                        periodo</a></li>
+                <li role="presentation"><a class="tab_a" href="#PorNivel" data-toggle="tab">Por nivel</a></li>
+            </ul>
+            <br />
+            <div class="tab-content">
+                <div class="tab-pane active" id="PorPeriodo">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-azul">
+                                <tr>
+                                    <th colspan="7" class="text-center">HISTORIA ACADÉMICA</th>
+                                </tr>
+                                <tr class="table-gris">
+                                    <th>Asignatura</th>
+                                    <th>Tipo</th>
+                                    <th>Créditos</th>
+                                    <th>Estado</th>
+                                    <th>Nota</th>
+                                    <th>Concepto</th>
+                                    <th># veces cursada</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="alert-info">
+                                    <td colspan="7">20261</td>
+                                </tr>
+                                <tr>
+                                    <td>FB0010 - ALGEBRA LINEAL</td>
+                                    <td>Fundamentación Básica</td>
+                                    <td>3</td>
+                                    <td>Aprobada</td>
+                                    <td>4,4</td>
+                                    <td></td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>FB6111 - CIENCIA, TECNOLOGÍA Y DESARROLLO</td>
+                                    <td>Formación Humanísticas</td>
+                                    <td>2</td>
+                                    <td>Aprobada</td>
+                                    <td>4,2</td>
+                                    <td></td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>FB6200 - TEORÍA DE LA AGENCIA</td>
+                                    <td>Formación Humanísticas</td>
+                                    <td>2</td>
+                                    <td>Aprobada</td>
+                                    <td>4,5</td>
+                                    <td>Homologada</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>FB6300 - CONSTITUCIÓN, CIUDADANÍA Y PAZ</td>
+                                    <td>Formación Humanísticas</td>
+                                    <td>2</td>
+                                    <td>Aprobada</td>
+                                    <td>4,8</td>
+                                    <td>Homologada</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>FB7111 - LENGUAJE Y CULTURA</td>
+                                    <td>Formación Humanísticas</td>
+                                    <td>2</td>
+                                    <td>Aprobada</td>
+                                    <td>4,3</td>
+                                    <td>Homologada</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>FB7211 - PENSAMIENTO CREATIVO</td>
+                                    <td>Formación Humanísticas</td>
+                                    <td>2</td>
+                                    <td>Aprobada</td>
+                                    <td>4,2</td>
+                                    <td></td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>FB7311 - RAZONAMIENTO MATEMÁTICO Y ANALÍTICO</td>
+                                    <td>Fundamentación Básica</td>
+                                    <td>3</td>
+                                    <td>Aprobada</td>
+                                    <td>4,6</td>
+                                    <td>Homologada</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>FB7400 - TIC COMPETENCIAS DIGITALES</td>
+                                    <td>Fundamentación Básica</td>
+                                    <td>2</td>
+                                    <td>Aprobada</td>
+                                    <td>4,0</td>
+                                    <td>Homologada</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>FB8111 - INGLÉS 1</td>
+                                    <td>Formación Humanísticas</td>
+                                    <td>2</td>
+                                    <td>Aprobada</td>
+                                    <td>4,0</td>
+                                    <td>Homologada</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>SD1001 - DESARROLLO DE PENSAMIENTO COMPUTACIONAL</td>
+                                    <td>Formación Básica Profesional</td>
+                                    <td>4</td>
+                                    <td>Aprobada</td>
+                                    <td>4,0</td>
+                                    <td>Homologada</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>SD1002 - LÓGICA DE PROGRAMACIÓN</td>
+                                    <td>Formación Básica Profesional</td>
+                                    <td>4</td>
+                                    <td>Aprobada</td>
+                                    <td>4,3</td>
+                                    <td></td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>SD1003 - MATEMÁTICAS DISCRETAS</td>
+                                    <td>Formación Básica Profesional</td>
+                                    <td>3</td>
+                                    <td>Aprobada</td>
+                                    <td>4,3</td>
+                                    <td></td>
+                                    <td>1</td>
+                                </tr>
+                                <tr class="alert-info">
+                                    <td colspan="7">20252</td>
+                                </tr>
+                                <tr>
+                                    <td>FB1300 - CÁLCULO DIFERENCIAL</td>
+                                    <td>Fundamentación Básica</td>
+                                    <td>3</td>
+                                    <td>Cancelada</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>0</td>
+                                </tr>
+                                <tr>
+                                    <td>FB8200 - INGLÉS 2</td>
+                                    <td>Formación Humanísticas</td>
+                                    <td>2</td>
+                                    <td>Aprobada</td>
+                                    <td>3,6</td>
+                                    <td></td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>SD1004 - ESTRUCTURA DE DATOS</td>
+                                    <td>Fundamentación Específica</td>
+                                    <td>4</td>
+                                    <td>Aprobada</td>
+                                    <td>4,8</td>
+                                    <td></td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>SD1005 - SISTEMAS OPERATIVOS</td>
+                                    <td>Fundamentación Específica</td>
+                                    <td>4</td>
+                                    <td>Aprobada</td>
+                                    <td>4,5</td>
+                                    <td></td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>SD1006 - BASES DE DATOS I</td>
+                                    <td>Fundamentación Específica</td>
+                                    <td>4</td>
+                                    <td>Aprobada</td>
+                                    <td>4,4</td>
+                                    <td></td>
+                                    <td>1</td>
+                                </tr>
+                                <tr class="alert-info">
+                                    <td colspan="7">20261</td>
+                                </tr>
+                                <tr>
+                                    <td>FB1300 - CÁLCULO DIFERENCIAL</td>
+                                    <td>Fundamentación Básica</td>
+                                    <td>3</td>
+                                    <td>Matriculada</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>0</td>
+                                </tr>
+                                <tr>
+                                    <td>FB8300 - INGLÉS 3</td>
+                                    <td>Formación Humanísticas</td>
+                                    <td>2</td>
+                                    <td>Matriculada</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>0</td>
+                                </tr>
+                                <tr>
+                                    <td>SD1007 - PROGRAMACIÓN ORIENTADA A OBJETOS</td>
+                                    <td>Fundamentación Específica</td>
+                                    <td>4</td>
+                                    <td>Matriculada</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>0</td>
+                                </tr>
+                                <tr>
+                                    <td>SD1008 - BASES DE DATOS II</td>
+                                    <td>Fundamentación Específica</td>
+                                    <td>4</td>
+                                    <td>Matriculada</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>0</td>
+                                </tr>
+                                <tr>
+                                    <td>SD1009 - INGENIERIA DE SOFTWARE</td>
+                                    <td>Fundamentación Específica</td>
+                                    <td>3</td>
+                                    <td>Matriculada</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>0</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Total créditos aprobados</td>
+                                    <td colspan="5"><span class="badge">45</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="tab-pane" id="PorNivel">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="encabezadoTablas">
+                                <tr>
+                                    <th colspan="8" class="text-center">HISTORIA ACADÉMICA</th>
+                                </tr>
+                                <tr class="table-gris">
+                                    <th>Asignatura</th>
+                                    <th>Tipo</th>
+                                    <th>Créditos</th>
+                                    <th>Estado</th>
+                                    <th>Nota</th>
+                                    <th>Concepto</th>
+                                    <th>Periodo</th>
+                                    <th># veces cursada</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="alert-info">
+                                    <td colspan="8">Nivel 1</td>
+                                </tr>
+                                <tr>
+                                    <td>FB6111 - CIENCIA, TECNOLOGÍA Y DESARROLLO</td>
+                                    <td>Formación Humanísticas</td>
+                                    <td>2</td>
+                                    <td>Aprobada</td>
+                                    <td>4,2</td>
+                                    <td></td>
+                                    <td>20251</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>FB7111 - LENGUAJE Y CULTURA</td>
+                                    <td>Formación Humanísticas</td>
+                                    <td>2</td>
+                                    <td>Aprobada</td>
+                                    <td>4,3</td>
+                                    <td>Homologada</td>
+                                    <td>20251</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>FB7211 - PENSAMIENTO CREATIVO</td>
+                                    <td>Formación Humanísticas</td>
+                                    <td>2</td>
+                                    <td>Aprobada</td>
+                                    <td>4,2</td>
+                                    <td></td>
+                                    <td>20251</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>FB7311 - RAZONAMIENTO MATEMÁTICO Y ANALÍTICO</td>
+                                    <td>Fundamentación Básica</td>
+                                    <td>3</td>
+                                    <td>Aprobada</td>
+                                    <td>4,0</td>
+                                    <td>Homologada</td>
+                                    <td>20251</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>FB8111 - INGLÉS 1</td>
+                                    <td>Formación Humanísticas</td>
+                                    <td>2</td>
+                                    <td>Aprobada</td>
+                                    <td>4,0</td>
+                                    <td>Homologada</td>
+                                    <td>20251</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>SD1001 - DESARROLLO DE PENSAMIENTO COMPUTACIONAL</td>
+                                    <td>Formación Básica Profesional</td>
+                                    <td>4</td>
+                                    <td>Aprobada</td>
+                                    <td>4,0</td>
+                                    <td>Homologada</td>
+                                    <td>20251</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr class="alert-info">
+                                    <td colspan="8">Nivel 2</td>
+                                </tr>
+                                <tr>
+                                    <td>FB0010 - ALGEBRA LINEAL</td>
+                                    <td>Fundamentación Básica</td>
+                                    <td>3</td>
+                                    <td>Aprobada</td>
+                                    <td>4,1</td>
+                                    <td></td>
+                                    <td>20251</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>FB6200 - TEORÍA DE LA AGENCIA</td>
+                                    <td>Formación Humanísticas</td>
+                                    <td>2</td>
+                                    <td>Aprobada</td>
+                                    <td>4,5</td>
+                                    <td>Homologada</td>
+                                    <td>20251</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>FB7400 - TIC COMPETENCIAS DIGITALES</td>
+                                    <td>Fundamentación Básica</td>
+                                    <td>2</td>
+                                    <td>Aprobada</td>
+                                    <td>4,0</td>
+                                    <td>Homologada</td>
+                                    <td>20251</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>SD1002 - LÓGICA DE PROGRAMACIÓN</td>
+                                    <td>Formación Básica Profesional</td>
+                                    <td>4</td>
+                                    <td>Aprobada</td>
+                                    <td>4,3</td>
+                                    <td></td>
+                                    <td>20251</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>SD1003 - MATEMÁTICAS DISCRETAS</td>
+                                    <td>Formación Básica Profesional</td>
+                                    <td>3</td>
+                                    <td>Aprobada</td>
+                                    <td>4,3</td>
+                                    <td></td>
+                                    <td>20251</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>FB8200 - INGLÉS 2</td>
+                                    <td>Formación Humanísticas</td>
+                                    <td>2</td>
+                                    <td>Aprobada</td>
+                                    <td>3,6</td>
+                                    <td></td>
+                                    <td>20252</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr class="alert-info">
+                                    <td colspan="8">Nivel 3</td>
+                                </tr>
+                                <tr>
+                                    <td>FB1300 - CÁLCULO DIFERENCIAL</td>
+                                    <td>Fundamentación Básica</td>
+                                    <td>3</td>
+                                    <td>Cancelada</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>20252</td>
+                                    <td>0</td>
+                                </tr>
+                                <tr>
+                                    <td>SD1004 - ESTRUCTURA DE DATOS</td>
+                                    <td>Fundamentación Específica</td>
+                                    <td>4</td>
+                                    <td>Aprobada</td>
+                                    <td>3,8</td>
+                                    <td></td>
+                                    <td>20252</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>SD1005 - SISTEMAS OPERATIVOS</td>
+                                    <td>Fundamentación Específica</td>
+                                    <td>4</td>
+                                    <td>Aprobada</td>
+                                    <td>3,9</td>
+                                    <td></td>
+                                    <td>20252</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>SD1006 - BASES DE DATOS I</td>
+                                    <td>Fundamentación Específica</td>
+                                    <td>4</td>
+                                    <td>Aprobada</td>
+                                    <td>3,4</td>
+                                    <td></td>
+                                    <td>20252</td>
+                                    <td>1</td>
+                                </tr>
+                                <tr>
+                                    <td>FB1300 - CÁLCULO DIFERENCIAL</td>
+                                    <td>Fundamentación Básica</td>
+                                    <td>3</td>
+                                    <td>Matriculada</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>20261</td>
+                                    <td>0</td>
+                                </tr>
+                                <tr>
+                                    <td>FB8300 - INGLÉS 3</td>
+                                    <td>Formación Humanísticas</td>
+                                    <td>2</td>
+                                    <td>Matriculada</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>20261</td>
+                                    <td>0</td>
+                                </tr>
+                                <tr class="alert-info">
+                                    <td colspan="8">Nivel 4</td>
+                                </tr>
+                                <tr>
+                                    <td>SD1007 - PROGRAMACIÓN ORIENTADA A OBJETOS</td>
+                                    <td>Fundamentación Específica</td>
+                                    <td>4</td>
+                                    <td>Matriculada</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>20261</td>
+                                    <td>0</td>
+                                </tr>
+                                <tr>
+                                    <td>SD1008 - BASES DE DATOS II</td>
+                                    <td>Fundamentación Específica</td>
+                                    <td>4</td>
+                                    <td>Matriculada</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>20261</td>
+                                    <td>0</td>
+                                </tr>
+                                <tr>
+                                    <td>SD1009 - INGENIERIA DE SOFTWARE</td>
+                                    <td>Fundamentación Específica</td>
+                                    <td>3</td>
+                                    <td>Matriculada</td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>20261</td>
+                                    <td>0</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2">Total créditos aprobados</td>
+                                    <td colspan="6"><span class="badge">45</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row rowTablas" id="contenedorMatriculas">
+            <table class="table tablaSinBordes">
+                <thead class="encabezadoTablas">
+                    <tr>
+                        <th class="text-center" colspan="5">MATRÍCULAS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><a href="#" class="btn btn-success btn-circle btn-xl" id="ConsultarTurnos"><i
+                                    class="fa fa-link"></i></a>
+                            <h5>Consultar turnos</h5>
+                        </td>
+                        <td><a href="#" class="btn btn-default btn-circle btn-xl"><i class="fa fa-calendar"></i></a>
+                            <h5>Ver horario</h5>
+                        </td>
+                        <td><a href="#" class="btn btn-warning btn-circle btn-xl"><i
+                                    class="fa fa-shopping-cart"></i></a>
+                            <h5>Mis deudas</h5>
+                        </td>
+                        <td><a href="#" class="btn btn-info btn-circle btn-xl"><i class="fa fa-paperclip"></i></a>
+                            <h5>Consultar liquidaciones</h5>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><a href="#" class="btn btn-primary btn-circle btn-xl"><i class="fas fa-sliders-h"></i></a>
+                            <h5>Matrícula</h5>
+                        </td>
+                        <td><a href="#" class="btn btn-infoTwo btn-circle btn-xl"><i class="fas fa-cog"></i></a>
+                            <h5>Reajuste de matrícula</h5>
+                        </td>
+                        <td><a href="#" class="btn btn-success btn-circle btn-xl"><i
+                                    class="glyphicon glyphicon-file"></i></a>
+                            <h5>Solicitar devolución de dinero de matrícula</h5>
+                        </td>
+                        <td><a href="#" class="btn btn-info btn-circle btn-xl"><i class="fas fa-list-alt"></i></a>
+                            <h5>Consultar Concertaciones</h5>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <div id="ModalDeNoAplicaParaTurnos" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4>Información de estudiante</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning"><i class="fa fa-exclamation-circle"></i> En este momento no tiene
+                        turnos asociados. Por favor, revisar su estado.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 
     <script src="../assets/js/scriptBody.js"></script>
+
+    <div style="display:none;">Proyecto académico SICAU - fines educativos - Institución Universitaria Pascual Bravo
+    </div>
 </body>
+
 </html>

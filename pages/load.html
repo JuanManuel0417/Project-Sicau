@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SICAU - Datos Personales | Estudiante</title>
+    <link rel="icon" type="image/x-icon" href="../assets/img/iupb.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../assets/css/styleLoad.css">
+</head>
+
+<body>
+
+    <div class="header-wrapper">
+        <div class="top-bar">
+            <a href="http://www.pascualbravo.edu.co/" class="web-btn" target="_blank">
+                Web Institucional
+            </a>
+            <div class="user-line">
+                <span class="glyphicon glyphicon-user"></span>
+                <span id="usuarioNombre"></span>
+            </div>
+            <div class="logout-line">
+                <span class="glyphicon glyphicon-log-out"></span>
+                <a href="../index.html">Cerrar sesión</a>
+            </div>
+        </div>
+        <div class="logos-container">
+            <img src="../assets/img/pascual_header.png" class="logo-pascual">
+            <img src="../assets/img/sicauLogo.png" class="logo-sicau">
+        </div>
+    </div>
+
+    <div class="nav-wrapper">
+        <nav class="navbar navbar-inverse">
+            <div class="container">
+                <ul class="nav navbar-nav navCenter">
+                    <li><a href="lobby.html">Inicio</a></li>
+                    <li><a href="body.html">Estudiantes</a></li>
+                    <li><a href="#">Extensión</a></li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+
+    <section class="body-content">
+        <a href="#" class="volver-link"><i class='fa fa-arrow-left'></i> Volver a inicio</a>
+        <h2 class="estudiante-nombre"></h2>
+
+        <ul class="nav nav-pills nav-justified" id="TabList">
+            <li><a href="#" data-toggle="tab">Datos personales</a></li>
+            <li><a href="#" data-toggle="tab">Académica</a></li>
+            <li><a href="#" data-toggle="tab">Laboral</a></li>
+            <li><a href="#" data-toggle="tab">Idiomas</a></li>
+            <li><a href="#" data-toggle="tab">Familiar</a></li>
+            <li class="active"><a href="#DocumentosPersonales" data-toggle="tab">Documentos</a></li>
+        </ul>
+
+        <div class="tab-content">
+            <div class="tab-pane" id="Personal"><div class="overlay-block"></div></div>
+            <div class="tab-pane" id="Academica"><div class="overlay-block"></div></div>
+            <div class="tab-pane" id="Laboral"><div class="overlay-block"></div></div>
+            <div class="tab-pane" id="Idiomas"><div class="overlay-block"></div></div>
+            <div class="tab-pane" id="Familiar"><div class="overlay-block"></div></div>
+            <div class="tab-pane active" id="DocumentosPersonales">
+                <div class="panel panel-info">
+                    <div class="panel-heading"> Documentos Requeridos</div>
+                    <div class="panel-body">
+                        <div class="alert alert-info" style="font-size:12px; padding:10px;">
+                            <i class="fa fa-info-circle"></i> <strong>Formatos permitidos:</strong> PDF para documentos
+                            | JPG, PNG, JPEG para foto carnet | Tamaño máximo: 5MB
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="tablaDocumentos">
+                                <thead>
+                                    <tr>
+                                        <th style="width:20%">Documento Obligatorio</th>
+                                        <th style="width:25%">Descripción</th>
+                                        <th style="width:30%">Subir Documento</th>
+                                        <th style="width:10%">Aprobado</th>
+                                        <th style="width:15%">Observaciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="listaDocumentos"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="progress">
+            <div id="progressBar" class="progress-bar" style="width: 0%;">0%</div>
+        </div>
+
+        <nav>
+            <ul class="pager">
+                <li class="disabled"><a href="#">Atrás</a></li>
+                <li><a href="#">Siguiente</a></li>
+            </ul>
+        </nav>
+    </section>
+
+    <!-- MODAL PARA VER DOCUMENTOS (agregado) -->
+    <div id="modalDocumento" class="modal fade" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title"><i class="fa fa-file-pdf-o"></i> Visualizar Documento</h4>
+                </div>
+                <div class="modal-body" style="min-height: 500px; text-align: center;">
+                    <div id="visorDocumento"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="../assets/js/scriptLoad.js"></script>
+
+</body>
+
+</html>
