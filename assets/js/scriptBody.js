@@ -1,16 +1,22 @@
 $(function () {
-    const nombreLimpio = localStorage.getItem("usuarioLimpio");
-    const correoOriginal = localStorage.getItem("usuarioOriginal");
-    
-    if (correoOriginal) {
-        $('#usuarioNombre').text(correoOriginal);
+    const apiBase = '/Project-Sicau';
+
+    async function loadUser() {
+        const response = await fetch(`${apiBase}/me`, { credentials: 'include' });
+        if (!response.ok) {
+            window.location.href = '../index.html';
+            return;
+        }
+        const data = await response.json();
+        const user = data.user;
+        if (user) {
+            $('#usuarioNombre').text(user.email);
+            const ccAleatoria = Math.floor(Math.random() * (9999999999 - 100000 + 1)) + 100000;
+            $('.estudiante-nombre').text(user.full_name + " - " + ccAleatoria + " C.C.");
+        }
     }
 
-    if (nombreLimpio) {
-        const ccAleatoria = Math.floor(Math.random() * (9999999999 - 100000 + 1)) + 100000;
-
-        $('.estudiante-nombre').text(nombreLimpio + " - " + ccAleatoria + " C.C.");
-    }
+    loadUser();
 
     $('#TabList a').click(function (e) {
         e.preventDefault();

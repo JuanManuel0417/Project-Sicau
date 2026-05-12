@@ -1,0 +1,5 @@
+# Ignorar archivos subidos y sesiones privadas
+/storage/uploads/
+/storage/.gitkeep
+*.log
+*.env

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>SICAU | Panel Administrativo</title>
+    <link rel="icon" type="image/x-icon" href="/Project-Sicau/assets/img/iupb.ico">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="/Project-Sicau/assets/css/styleAdmin.css">
+</head>
+
+<body class="admin-shell">
+    <div class="admin-topbar">
+        <div>
+            <div class="eyebrow">SICAU · Validación documental inteligente</div>
+            <h1>Panel administrativo</h1>
+            <p>Supervisión automática, revisión manual y trazabilidad completa de cada documento.</p>
+        </div>
+        <div class="admin-topbar-actions">
+            <a href="/Project-Sicau/pages/lobby.html" class="btn btn-ghost"><i class="fa-solid fa-house"></i> Lobby</a>
+            <button class="btn btn-ghost" id="btnReloadAdmin"><i class="fa-solid fa-rotate"></i> Recargar</button>
+            <button class="btn btn-danger" id="btnLogoutAdmin"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</button>
+        </div>
+    </div>
+
+    <section class="stats-grid">
+        <article class="stat-card stat-primary">
+            <span>Total de documentos</span>
+            <strong id="statTotalDocuments">0</strong>
+            <small>Documentos cargados en el sistema</small>
+        </article>
+        <article class="stat-card stat-success">
+            <span>Validados automáticamente</span>
+            <strong id="statAutoValidated">0</strong>
+            <small>Casos resueltos por el motor inteligente</small>
+        </article>
+        <article class="stat-card stat-warning">
+            <span>Requieren revisión</span>
+            <strong id="statNeedsReview">0</strong>
+            <small>Documentos con observaciones o baja confianza</small>
+        </article>
+        <article class="stat-card stat-danger">
+            <span>Incorrectos o ilegibles</span>
+            <strong id="statInvalid">0</strong>
+            <small>Archivos rechazables o inconsistentes</small>
+        </article>
+        <article class="stat-card stat-primary">
+            <span>Porcentaje válido</span>
+            <strong id="statValidPercent">0%</strong>
+            <small>Relación de documentos válidos sobre el total</small>
+        </article>
+    </section>
+
+    <section class="state-summary panel">
+        <div class="panel-head">
+            <div>
+                <h2>Distribución por estado</h2>
+                <p>Lectura rápida del comportamiento documental actual.</p>
+            </div>
+        </div>
+        <div id="stateSummaryList" class="state-summary-list"></div>
+    </section>
+
+    <section class="content-grid">
+        <div class="panel panel-left">
+            <div class="panel-head">
+                <div>
+                    <h2>Documentos registrados</h2>
+                    <p>Filtra por estudiante, tipo o estado para revisar rápidamente la cola documental.</p>
+                </div>
+                <div class="panel-actions">
+                    <input type="search" class="form-control" id="searchDocuments" placeholder="Buscar estudiante, correo o documento">
+                    <select class="form-control" id="stateFilter">
+                        <option value="">Todos los estados</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-responsive table-wrapper">
+                <table class="table admin-table">
+                    <thead>
+                        <tr>
+                            <th>Estudiante</th>
+                            <th>Documento</th>
+                            <th>Estado</th>
+                            <th>Confianza</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminDocumentsBody">
+                        <tr><td colspan="5" class="text-center muted-row">Cargando documentos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <aside class="panel panel-right">
+            <div class="detail-hero">
+                <div>
+                    <div class="eyebrow">Detalle del análisis</div>
+                    <h2 id="detailStudentName">Selecciona un documento</h2>
+                    <p id="detailDocumentMeta">Aquí verás la validación automática, los campos extraídos y el historial.</p>
+                </div>
+                <div class="detail-badge" id="detailStateBadge">Sin selección</div>
+            </div>
+
+            <div class="detail-block">
+                <h3>Resumen automático</h3>
+                <p id="detailSummary" class="detail-summary">Sin análisis cargado todavía.</p>
+            </div>
+
+            <div class="detail-block">
+                <h3>Comparación</h3>
+                <div id="comparisonList" class="comparison-list"></div>
+            </div>
+
+            <div class="detail-block">
+                <h3>Campos extraídos</h3>
+                <div id="fieldsList" class="data-list"></div>
+            </div>
+
+            <div class="detail-block">
+                <h3>Historial</h3>
+                <div id="historyList" class="data-list timeline-list"></div>
+            </div>
+
+            <div class="detail-block">
+                <h3>Observaciones</h3>
+                <div id="observationsList" class="data-list"></div>
+            </div>
+
+            <div class="detail-block preview-block">
+                <h3>Vista previa</h3>
+                <iframe id="documentPreview" title="Vista previa del documento"></iframe>
+            </div>
+
+            <div class="review-block">
+                <label for="reviewStateSelect">Nuevo estado manual</label>
+                <select id="reviewStateSelect" class="form-control"></select>
+                <textarea id="reviewComment" class="form-control" rows="3" placeholder="Comentario administrativo"></textarea>
+                <div class="review-actions">
+                    <button class="btn btn-info" id="btnReanalyzeDocument"><i class="fa-solid fa-rotate"></i> Reanalizar</button>
+                    <button class="btn btn-success" id="btnApproveDocument"><i class="fa-solid fa-check"></i> Aprobar</button>
+                    <button class="btn btn-danger" id="btnRejectDocument"><i class="fa-solid fa-xmark"></i> Rechazar</button>
+                    <button class="btn btn-default" id="btnApplyReview"><i class="fa-solid fa-floppy-disk"></i> Guardar revisión</button>
+                </div>
+            </div>
+        </aside>
+    </section>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="/Project-Sicau/assets/js/scriptAdmin.js"></script>
+</body>
+
+</html>

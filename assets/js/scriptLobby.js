@@ -18,10 +18,15 @@ function nextSlide() {
 
 if(slides.length > 0) setInterval(nextSlide, 5000);
 
-document.addEventListener("DOMContentLoaded", function () {
-
-    const original = localStorage.getItem("usuarioOriginal");
-    const limpio = localStorage.getItem("usuarioLimpio");
+document.addEventListener("DOMContentLoaded", async function () {
+    const response = await fetch('/Project-Sicau/me', { credentials: 'include' });
+    if (!response.ok) {
+        window.location.href = "../index.html";
+        return;
+    }
+    const data = await response.json();
+    const original = data.user.email;
+    const limpio = data.user.full_name;
 
     if (original && limpio) {
         if(document.getElementById("usuarioNombre")) {
@@ -36,17 +41,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const ccAleatoria = Math.floor(Math.random() * (9999999999 - 100000 + 1)) + 100000;
         $('.estudiante-nombre').text(limpio + " - " + ccAleatoria + " C.C.");
-
-    } else {
-        // Si no hay datos, seguridad: al index
-        window.location.href = "../index.html";
     }
 
     let logoutBtn = document.querySelector(".logout-line a");
     if(logoutBtn) {
-        logoutBtn.addEventListener("click", function (e) {
+        logoutBtn.addEventListener("click", async function (e) {
             e.preventDefault();
-            localStorage.clear();
+            await fetch('/Project-Sicau/logout', { method: 'POST', credentials: 'include' });
             window.location.href = "../index.html";
         });
     }
