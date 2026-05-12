@@ -11,22 +11,49 @@ $(function () {
         }
     });
 
-    $('form').submit(function (e) {
+    $('form').submit(async function (e) {
         e.preventDefault();
 
-        let usuarioRaw = $('#usuario').val(); 
+        let usuarioRaw = $('#usuario').val();
         let password = $('#password').val();
 
-        if (usuarioRaw.trim() !== "" && password.trim() !== "") {
-            
-            let usuarioLimpio = usuarioRaw.replace(/[0-9.]/g, ' ').replace(/\s+/g, ' ').trim();
-
-            localStorage.setItem("usuarioOriginal", usuarioRaw.toLowerCase()); // esneider.gonzalez467
-            localStorage.setItem("usuarioLimpio", usuarioLimpio.toUpperCase()); // ESNEIDER GONZALEZ
-
-            window.location.href = "pages/lobby.html";
-        } else {
+        if (usuarioRaw.trim() === "" || password.trim() === "") {
             alert("Por favor, complete todos los campos");
+            return;
+        }
+
+        let email = usuarioRaw.toLowerCase();
+        if (!email.includes('@')) {
+            email = `${email}@pascualbravo.edu.co`;
+        }
+
+        try {
+            const response = await fetch('/Project-Sicau/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ email, password }),
+                credentials: 'include'
+            });
+            const result = await response.json();
+
+            if (!response.ok) {
+                alert(result.error || 'Credenciales inválidas');
+                return;
+            }
+
+            let usuarioLimpio = usuarioRaw.replace(/[0-9.]/g, ' ').replace(/\s+/g, ' ').trim();
+            localStorage.setItem("usuarioOriginal", email);
+            localStorage.setItem("usuarioLimpio", usuarioLimpio.toUpperCase());
+            localStorage.setItem("roleName", result.user.role_name ?? 'Estudiante');
+            localStorage.setItem("roleSlug", result.user.role_slug ?? 'estudiante');
+
+            if (result.user.role_slug === 'administrador' || result.user.role_name === 'Administrador') {
+                window.location.href = "pages/admin.html";
+            } else {
+                window.location.href = "pages/body.html";
+            }
+        } catch (error) {
+            alert('Error de conexión con el servidor');
         }
     });
 });
