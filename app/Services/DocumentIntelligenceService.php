@@ -17,85 +17,128 @@ class DocumentIntelligenceService
                 'keywords' => ['cedula', 'cédula', 'ciudadania', 'ciudadanía', 'república de colombia', 'documento de identidad', 'sexo', 'nacimiento', 'expedicion'],
             ],
             'graduation_act' => [
-                'keywords' => ['acta de grado', 'diploma', 'graduacion', 'graduación', 'titulo', 'título', 'institución educativa', 'otorga'],
+                'keywords' => ['acta de grado', 'diploma', 'graduacion', 'graduación', 'titulo', 'título', 'institución educativa', 'otorga', 'bachiller'],
             ],
             'saber_11' => [
-                'keywords' => ['saber 11', 'icfes', 'puntaje global', 'resultado', 'competencias', 'presentacion', 'presentación'],
+                'keywords' => ['saber 11', 'icfes', 'puntaje global', 'resultado', 'competencias', 'presentacion', 'presentación', 'áreas evaluadas'],
             ],
             'portrait_photo' => [
-                'keywords' => ['foto', 'photograph', 'selfie'],
+                'keywords' => ['foto', 'photograph', 'selfie', 'carnet', 'rostro'],
             ],
             'sisben_certificate' => [
-                'keywords' => ['sisben', 'sisbén', 'grupo', 'puntaje', 'beneficiario'],
+                'keywords' => ['sisben', 'sisbén', 'grupo', 'puntaje', 'beneficiario', 'municipio'],
             ],
             'utility_bill' => [
-                'keywords' => ['factura', 'servicios publicos', 'servicios públicos', 'direccion', 'dirección', 'estrato', 'titular', 'suscriptor'],
+                'keywords' => ['factura', 'servicios publicos', 'servicios públicos', 'direccion', 'dirección', 'estrato', 'titular', 'suscriptor', 'empresa de servicios'],
             ],
         ];
     }
 
     public function analyze(string $filePath, array $expectedType, array $user = []): array
     {
-        if (function_exists('set_time_limit')) { @set_time_limit(120); }
-        $this->lastOcrDebug = [];
-        $this->lastStructuredHints = [];
-        $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-        $mime = $this->detectMime($filePath, $extension);
-        $isImage = in_array($extension, ['jpg', 'jpeg', 'png'], true);
-        $ocrAvailable = $this->isOcrAvailableForExtension($extension);
-        $expectedCode = (string)($expectedType['code'] ?? '');
-        $ocrText = $this->extractText($filePath, $extension, $expectedCode);
-        $normalizedText = $this->normalize($ocrText);
-        $filenameText = $this->normalize(basename($filePath));
-        $photoMeta = $this->photoMetadata($filePath, $isImage, (string)($expectedType['code'] ?? ''));
-        $quality = $this->evaluateQuality($filePath, $extension, $ocrText, $photoMeta);
+        try {
+            if (function_exists('set_time_limit')) { @set_time_limit(120); }
+            $this->lastOcrDebug = [];
+            $this->lastStructuredHints = [];
+            $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+            $mime = $this->detectMime($filePath, $extension);
+            $isImage = in_array($extension, ['jpg', 'jpeg', 'png'], true);
+            $ocrAvailable = $this->isOcrAvailableForExtension($extension);
+            $expectedCode = (string)($expectedType['code'] ?? '');
+            $ocrText = '';
+            try {
+                $ocrText = $this->extractText($filePath, $extension, $expectedCode);
+            } catch (\Throwable $ocrEx) {
+                $this->lastOcrDebug['ocr_error'] = 'OCR error: ' . $ocrEx->getMessage();
+                $ocrText = '';
+            }
+            $normalizedText = $this->normalize($ocrText);
+            $filenameText = $this->normalize(basename($filePath));
+            $photoMeta = $this->photoMetadata($filePath, $isImage, (string)($expectedType['code'] ?? ''));
+            $quality = $this->evaluateQuality($filePath, $extension, $ocrText, $photoMeta);
 
-        $detected = $this->classify($expectedType, $normalizedText, $filenameText, $quality, $isImage, $photoMeta);
-        $fields = $this->extractFields($detected['code'] ?? $expectedType['code'], $ocrText, $user, $photoMeta, $this->lastStructuredHints);
-        $comparison = $this->compareWithUser($fields, $user);
+            $detected = $this->classify($expectedType, $normalizedText, $filenameText, $quality, $isImage, $photoMeta);
+            $fields = $this->extractFields($detected['code'] ?? $expectedType['code'], $ocrText, $user, $photoMeta, $this->lastStructuredHints);
+            $comparison = $this->compareWithUser($fields, $user);
+            $scoreBreakdown = $this->computeIntelligentScore(
+                (string)($expectedType['code'] ?? ''),
+                (string)($detected['code'] ?? ''),
+                $detected['candidates'] ?? [],
+                $fields,
+                $quality,
+                $comparison,
+                $normalizedText
+            );
 
-        $confidence = $detected['confidence'];
-        if (!empty($comparison['name_match'])) {
-            $confidence = min(99.0, $confidence + 8.0);
-        }
+            $confidence = (float)$scoreBreakdown['score'];
+            $detected['observations'] = $this->mergeObservations($detected['observations'], $scoreBreakdown['observations']);
 
-        $summary = $this->buildSummary($expectedType['name'] ?? $expectedType['code'], $detected['name'] ?? $expectedType['name'], $confidence, $quality, array_merge($detected['observations'], $comparison['observations']));
-        $status = $this->resolveStatus($confidence, $quality, $detected['code'] ?? null, $expectedType['code'] ?? null, $ocrText, $isImage, $photoMeta, $ocrAvailable);
+            $summary = $this->buildSummary($expectedType['name'] ?? $expectedType['code'], $detected['name'] ?? $expectedType['name'], $confidence, $quality, array_merge($detected['observations'], $comparison['observations']));
+            $status = $this->resolveStatus($confidence, $quality, $detected['code'] ?? null, $expectedType['code'] ?? null, $ocrText, $isImage, $photoMeta, $ocrAvailable);
 
-        if (!$ocrAvailable) {
-            $detected['observations'][] = 'OCR no disponible en el servidor. Resultado basado en reglas heurísticas.';
-        }
+            if (!$ocrAvailable) {
+                $detected['observations'][] = 'OCR no disponible en el servidor. Resultado basado en reglas heurísticas.';
+            }
 
-        return [
-            'engine_name' => $this->config['app']['analysis']['ocr_engine'] ?? 'heuristic-ocr',
-            'mime' => $mime,
-            'extension' => $extension,
-            'ocr_text' => $ocrText,
-            'quality_score' => $quality,
-            'confidence' => round($confidence, 2),
-            'status_code' => $status['code'],
-            'status_label' => $status['label'],
-            'state_code' => $status['code'],
-            'detected_document_type_code' => $detected['code'] ?? null,
-            'detected_document_type_name' => $detected['name'] ?? null,
-            'detected_document_type_id' => null,
-            'is_readable' => $quality >= 45,
-            'is_match' => ($detected['code'] ?? null) === ($expectedType['code'] ?? null),
-            'summary' => $summary,
-            'observations' => $this->mergeObservations($detected['observations'], $comparison['observations']),
-            'extracted_fields' => $fields,
-            'analysis_payload' => [
+            return [
+                'engine_name' => $this->config['app']['analysis']['ocr_engine'] ?? 'heuristic-ocr',
                 'mime' => $mime,
                 'extension' => $extension,
-                'ocr_available' => $ocrAvailable,
-                'ocr_debug' => $this->lastOcrDebug,
-                'structured_hints' => $this->lastStructuredHints,
-                'comparison' => $comparison,
-                'detected' => $detected,
-                'photo_metadata' => $photoMeta,
+                'ocr_text' => $ocrText,
                 'quality_score' => $quality,
-            ],
-        ];
+                'confidence' => round($confidence, 2),
+                'status_code' => $status['code'],
+                'status_label' => $status['label'],
+                'state_code' => $status['code'],
+                'detected_document_type_code' => $detected['code'] ?? null,
+                'detected_document_type_name' => $detected['name'] ?? null,
+                'detected_document_type_id' => null,
+                'is_readable' => $quality >= 45,
+                'is_match' => ($detected['code'] ?? null) === ($expectedType['code'] ?? null),
+                'summary' => $summary,
+                'observations' => $this->mergeObservations($detected['observations'], $comparison['observations']),
+                'extracted_fields' => $fields,
+                'analysis_payload' => [
+                    'mime' => $mime,
+                    'extension' => $extension,
+                    'ocr_available' => $ocrAvailable,
+                    'ocr_debug' => $this->lastOcrDebug,
+                    'structured_hints' => $this->lastStructuredHints,
+                    'comparison' => $comparison,
+                    'score_breakdown' => $scoreBreakdown,
+                    'detected' => $detected,
+                    'photo_metadata' => $photoMeta,
+                    'quality_score' => $quality,
+                ],
+            ];
+        } catch (\Throwable $ex) {
+            // Fallback seguro: nunca romper el sistema
+            if (!isset($this->lastOcrDebug['ocr_error'])) {
+                $this->lastOcrDebug['ocr_error'] = 'Critical error: ' . $ex->getMessage();
+            }
+            return [
+                'engine_name' => $this->config['app']['analysis']['ocr_engine'] ?? 'heuristic-ocr',
+                'mime' => null,
+                'extension' => null,
+                'ocr_text' => '',
+                'quality_score' => 0,
+                'confidence' => 0,
+                'status_code' => 'ocr_error',
+                'status_label' => 'Error OCR',
+                'state_code' => 'ocr_error',
+                'detected_document_type_code' => null,
+                'detected_document_type_name' => null,
+                'detected_document_type_id' => null,
+                'is_readable' => false,
+                'is_match' => false,
+                'summary' => 'Error en OCR: ' . $ex->getMessage(),
+                'observations' => ['Error en OCR: ' . $ex->getMessage()],
+                'extracted_fields' => [],
+                'analysis_payload' => [
+                    'ocr_debug' => $this->lastOcrDebug,
+                ],
+            ];
+        }
     }
 
     private function detectMime(string $filePath, string $extension): string
@@ -181,7 +224,74 @@ class DocumentIntelligenceService
         try {
             $ocrResult = $this->runOcr($filePath);
             return $this->validateOcrResult($ocrResult, $expectedCode);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+            $this->lastOcrDebug['pdf_ocr_error'] = $e->getMessage();
+            return '';
+        }
+    }
+
+    private function extractImageText(string $filePath, string $expectedCode = ''): string
+    {
+        try {
+            $binary = $this->resolveBinaryPath('tesseract');
+            if (!$this->commandExists($binary)) {
+                $this->lastOcrDebug['ocr_error'] = 'tesseract no disponible';
+                return '';
+            }
+
+            $variants = $this->buildImageVariants($filePath);
+            $psms = [6, 4];
+            $startedAt = microtime(true);
+            $timeBudget = 25.0;
+            $maxAttempts = 12;
+            $attempts = 0;
+            $bestText = '';
+            $bestScore = -1;
+            $debugCandidates = [];
+
+            foreach ($variants as $variantName => $variantPath) {
+                foreach ($psms as $psm) {
+                    if ($attempts >= $maxAttempts || (microtime(true) - $startedAt) > $timeBudget) {
+                        break 2;
+                    }
+
+                    $candidate = $this->runTesseract($binary, $variantPath, 'spa+eng', $psm, 1);
+                    $attempts++;
+                    $score = $this->scoreOcrCandidate($candidate, $expectedCode);
+                    $debugCandidates[$variantName]['psm' . $psm] = [
+                        'score' => $score,
+                        'text' => $candidate,
+                    ];
+
+                    if ($score > $bestScore) {
+                        $bestScore = $score;
+                        $bestText = $candidate;
+                    }
+                }
+            }
+
+            if ($expectedCode === 'identity_document' && (microtime(true) - $startedAt) <= $timeBudget) {
+                $region = $this->runIdentityRegionOcr($binary, $variants);
+                $regionText = trim((string)($region['text'] ?? ''));
+                $regionScore = $this->scoreOcrCandidate($regionText, $expectedCode);
+                $this->lastStructuredHints = is_array($region['hints'] ?? null) ? $region['hints'] : [];
+
+                if ($regionScore > $bestScore) {
+                    $bestScore = $regionScore;
+                    $bestText = $regionText;
+                }
+            }
+
+            $this->lastOcrDebug['ocr_candidates'] = $debugCandidates;
+            $this->lastOcrDebug['ocr_best_score'] = $bestScore;
+            $this->lastOcrDebug['ocr_best_text_length'] = strlen($bestText);
+            $this->lastOcrDebug['ocr_attempts'] = $attempts;
+            $this->lastOcrDebug['ocr_elapsed_ms'] = (int)round((microtime(true) - $startedAt) * 1000);
+            $this->lastOcrDebug['ocr_truncated_by_budget'] = ($attempts >= $maxAttempts) || ((microtime(true) - $startedAt) > $timeBudget);
+
+            return trim($bestText);
+        } catch (\Throwable $e) {
+            $this->lastOcrDebug['ocr_error'] = $e->getMessage();
             return '';
         }
     }
@@ -189,83 +299,53 @@ class DocumentIntelligenceService
     private function runOcr(string $filePath): string
     {
         $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-        $mime = $this->detectMime($filePath, $extension);
-        $isImage = in_array($extension, ['jpg', 'jpeg', 'png'], true);
-        $ocrAvailable = $this->isOcrAvailableForExtension($extension);
-        $expectedCode = (string)($expectedType['code'] ?? '');
-        $ocrText = $this->extractText($filePath, $extension, $expectedCode);
-        $normalizedText = $this->normalize($ocrText);
-        $filenameText = $this->normalize(basename($filePath));
-        $photoMeta = $this->photoMetadata($filePath, $isImage, (string)($expectedType['code'] ?? ''));
-        $quality = $this->evaluateQuality($filePath, $extension, $ocrText, $photoMeta);
-
-        $detected = $this->classify($expectedType, $normalizedText, $filenameText, $quality, $isImage, $photoMeta);
-        $fields = $this->extractFields($detected['code'] ?? $expectedType['code'], $ocrText, $user, $photoMeta, $this->lastStructuredHints);
-        $comparison = $this->compareWithUser($fields, $user);
-
-        $confidence = $detected['confidence'];
-        if (!empty($comparison['name_match'])) {
-            $confidence = min(99.0, $confidence + 8.0);
+        if (in_array($extension, ['jpg', 'jpeg', 'png'], true)) {
+            return $this->extractImageText($filePath, '');
         }
 
-        $summary = $this->buildSummary($expectedType['name'] ?? $expectedType['code'], $detected['name'] ?? $expectedType['name'], $confidence, $quality, array_merge($detected['observations'], $comparison['observations']));
-        $status = $this->resolveStatus($confidence, $quality, $detected['code'] ?? null, $expectedType['code'] ?? null, $ocrText, $isImage, $photoMeta, $ocrAvailable);
-
-        if (!$ocrAvailable) {
-            $detected['observations'][] = 'OCR no disponible en el servidor. Resultado basado en reglas heurísticas.';
+        if ($extension !== 'pdf') {
+            return '';
         }
 
-        return [
-            'engine_name' => $this->config['app']['analysis']['ocr_engine'] ?? 'heuristic-ocr',
-            'mime' => $mime,
-            'extension' => $extension,
-            'ocr_text' => $ocrText,
-            'quality_score' => $quality,
-            'confidence' => round($confidence, 2),
-            'status_code' => $status['code'],
-            'status_label' => $status['label'],
-            'state_code' => $status['code'],
-            'detected_document_type_code' => $detected['code'] ?? null,
-            'detected_document_type_name' => $detected['name'] ?? null,
-            'detected_document_type_id' => null,
-            'is_readable' => $quality >= 45,
-            'is_match' => ($detected['code'] ?? null) === ($expectedType['code'] ?? null),
-            'summary' => $summary,
-            'observations' => $this->mergeObservations($detected['observations'], $comparison['observations']),
-            'extracted_fields' => $fields,
-            'analysis_payload' => [
-                'mime' => $mime,
-                'extension' => $extension,
-                'ocr_available' => $ocrAvailable,
-                'ocr_debug' => $this->lastOcrDebug,
-                'structured_hints' => $this->lastStructuredHints,
-                'comparison' => $comparison,
-                'detected' => $detected,
-                'photo_metadata' => $photoMeta,
-                'quality_score' => $quality,
-            ],
-        ];
+        $pdftoppm = $this->resolveBinaryPath('pdftoppm');
+        if (!$this->commandExists($pdftoppm)) {
+            $this->lastOcrDebug['pdf_ocr_error'] = 'pdftoppm no disponible';
+            return '';
+        }
+
+        $tmpBase = tempnam(sys_get_temp_dir(), 'sicau_pdf_img_');
+        if ($tmpBase === false) {
+            return '';
+        }
+
+        @unlink($tmpBase);
+        $outputPrefix = $tmpBase;
+        $command = $this->binaryCommand($pdftoppm) . ' -f 1 -singlefile -png ' . escapeshellarg($filePath) . ' ' . escapeshellarg($outputPrefix);
+        @shell_exec($command . ' 2>&1');
+
+        $imagePath = $outputPrefix . '.png';
+        if (!is_file($imagePath)) {
+            $this->lastOcrDebug['pdf_ocr_error'] = 'No se pudo rasterizar PDF para OCR';
+            return '';
+        }
+
+        $text = $this->extractImageText($imagePath, '');
+        @unlink($imagePath);
+
+        return $text;
     }
 
     private function validateOcrResult(string $ocrResult, string $expectedCode): string
     {
-        $normalized = $this->normalize($ocrResult);
-        $score = strlen($normalized);
-        if ($expectedCode === 'identity_document') {
-            if (preg_match('/\b(cedula|cedula de ciudadania|republica de colombia|colombia)\b/i', $text)) {
-                $score += 150;
-            }
-            if (preg_match('/\b\d{7,11}\b/', $text)) {
-                $score += 120;
-            }
-            if (preg_match('/\b([0-3]?\d\s*(ENE|FEB|MAR|ABR|MAY|JUN|JUL|AGO|SEP|OCT|NOV|DIC)\s*(19|20)\d{2})\b/i', $text)) {
-                $score += 80;
-            }
-            if (preg_match('/\b(MASCULINO|FEMENINO|SEXO|\bM\b|\bF\b)\b/i', $text)) {
-                $score += 60;
-            }
+        $text = trim($ocrResult);
+        if ($text === '') {
+            return '';
         }
-        return $score;
+
+        $score = $this->scoreOcrCandidate($text, $expectedCode);
+        $minScore = $expectedCode === 'identity_document' ? 45 : 20;
+
+        return $score >= $minScore ? $text : '';
     }
 
     private function runTesseract(string $binary, string $filePath, string $lang, int $psm, int $oem = 1): string
@@ -319,7 +399,8 @@ class DocumentIntelligenceService
             $filtered[] = $line;
         }
 
-        return trim(implode("\n", $filtered));
+        $cleaned = trim(implode("\n", $filtered));
+        return $this->normalizeOcrText($cleaned);
     }
 
     private function buildImageVariants(string $filePath): array
@@ -715,6 +796,8 @@ class DocumentIntelligenceService
         $candidates = [];
         foreach ($this->profiles as $code => $profile) {
             $score = $this->scoreProfile($profile['keywords'], $normalizedText, $filenameText);
+            $structure = $this->analyzeDocumentStructure($code, $normalizedText);
+            $score += $structure['score'];
             if ($code === 'portrait_photo') {
                 $score += $this->photoBonus($isImage, $normalizedText, $quality, $photoMeta);
             }
@@ -724,9 +807,17 @@ class DocumentIntelligenceService
         arsort($candidates);
         $bestCode = array_key_first($candidates) ?: $expectedType['code'];
         $bestScore = (float)($candidates[$bestCode] ?? 0);
-        $confidence = min(99.0, max(20.0, $bestScore + ($quality * 0.25)));
+        $confidence = min(99.0, max(20.0, $bestScore + ($quality * 0.15)));
         $expectedCode = $expectedType['code'] ?? null;
         $observations = [];
+
+        if ($expectedCode) {
+            $expectedScore = (float)($candidates[$expectedCode] ?? 0.0);
+            if ($expectedScore >= 35.0 && ($bestScore - $expectedScore) <= 12.0) {
+                $bestCode = $expectedCode;
+                $bestScore = $expectedScore;
+            }
+        }
 
         if ($quality < 35) {
             $observations[] = 'La calidad del archivo es baja o el contenido no pudo leerse con precisión.';
@@ -765,11 +856,15 @@ class DocumentIntelligenceService
             }
 
             if (str_contains($normalizedText, $normalizedKeyword)) {
-                $score += 18;
+                $score += 12;
+            } elseif ($this->fuzzyContains($normalizedText, $normalizedKeyword, 0.82)) {
+                $score += 8;
             }
 
             if (str_contains($filenameText, $normalizedKeyword)) {
-                $score += 8;
+                $score += 5;
+            } elseif ($this->fuzzyContains($filenameText, $normalizedKeyword, 0.8)) {
+                $score += 3;
             }
         }
 
@@ -801,11 +896,187 @@ class DocumentIntelligenceService
     private function extractFields(string $documentCode, string $ocrText, array $user, array $photoMeta, array $hints = []): array
     {
         $fields = [];
+        $ocrText = $this->normalizeOcrText($ocrText);
 
+        // Extracción común
         $commonName = $this->matchRegex($ocrText, '/nombre(?: completo)?[:\s]+([A-ZÁÉÍÓÚÑ ]{6,})/iu');
-        $commonDoc = $this->matchRegex($ocrText, '/(?:documento|cedula|cédula)[^0-9]{0,20}([0-9]{6,15})/iu');
         $commonDate = $this->matchDate($ocrText);
 
+        // ACTA DE GRADO
+        if ($documentCode === 'graduation_act') {
+            $fields[] = [
+                'key' => 'student_name',
+                'label' => 'Nombre del estudiante',
+                'value' => $commonName ?? $this->matchRegex($ocrText, '/egresado[:\s]+([A-ZÁÉÍÓÚÑ ]{6,})/iu') ?? ($user['full_name'] ?? null),
+                'confidence' => 75,
+            ];
+            $fields[] = [
+                'key' => 'institution',
+                'label' => 'Institución educativa',
+                'value' => $this->matchRegex($ocrText, '/instituci[oó]n(?: educativa)?[:\s]+([A-ZÁÉÍÓÚÑ0-9 ,.-]{3,})/iu'),
+                'confidence' => 60,
+            ];
+            $fields[] = [
+                'key' => 'graduation_date',
+                'label' => 'Fecha de graduación',
+                'value' => $commonDate ?? $this->matchRegex($ocrText, '/fecha[:\s]+([0-3]?[0-9][\/\-.][0-1]?\d[\/\-.](?:19|20)?[0-9]{2})/iu'),
+                'confidence' => 60,
+            ];
+            $fields[] = [
+                'key' => 'degree_title',
+                'label' => 'Título obtenido',
+                'value' => $this->matchRegex($ocrText, '/t[ií]tulo[:\s]+([A-ZÁÉÍÓÚÑ0-9 ,.-]{3,})/iu') ?? $this->matchRegex($ocrText, '/bachiller(?: académico| técnico)?/iu'),
+                'confidence' => 60,
+            ];
+            $fields[] = [
+                'key' => 'city',
+                'label' => 'Ciudad',
+                'value' => $this->matchRegex($ocrText, '/ciudad[:\s]+([A-ZÁÉÍÓÚÑ ]{3,})/iu'),
+                'confidence' => 50,
+            ];
+            return $fields;
+        }
+
+        // PRUEBAS SABER 11
+        if ($documentCode === 'saber_11') {
+            $globalScore = $this->extractSaberGlobalScore($ocrText);
+            $presentationYear = $this->extractLikelyYear($ocrText);
+            $fields[] = [
+                'key' => 'student_name',
+                'label' => 'Nombre del estudiante',
+                'value' => $commonName ?? ($user['full_name'] ?? null),
+                'confidence' => 75,
+            ];
+            $fields[] = [
+                'key' => 'global_score',
+                'label' => 'Puntaje global',
+                'value' => $globalScore,
+                'confidence' => $globalScore !== null ? 90 : 65,
+            ];
+            $fields[] = [
+                'key' => 'areas',
+                'label' => 'Áreas evaluadas',
+                'value' => implode(', ', array_filter([
+                    $this->containsKeyword($ocrText, 'lectura critica') ? 'Lectura Critica' : null,
+                    $this->containsKeyword($ocrText, 'matematicas') ? 'Matematicas' : null,
+                    $this->containsKeyword($ocrText, 'sociales') ? 'Sociales y Ciudadanas' : null,
+                    $this->containsKeyword($ocrText, 'naturales') ? 'Ciencias Naturales' : null,
+                    $this->containsKeyword($ocrText, 'ingles') ? 'Ingles' : null,
+                ])),
+                'confidence' => 55,
+            ];
+            $fields[] = [
+                'key' => 'presentation_year',
+                'label' => 'Año de presentación',
+                'value' => $presentationYear,
+                'confidence' => 60,
+            ];
+            return $fields;
+        }
+
+        // FOTO TIPO CARNET
+        if ($documentCode === 'portrait_photo') {
+            $fields[] = [
+                'key' => 'is_image',
+                'label' => 'Archivo es imagen',
+                'value' => $photoMeta['dimensions'] !== null ? 'Sí' : 'No',
+                'confidence' => 99,
+            ];
+            $fields[] = [
+                'key' => 'min_resolution',
+                'label' => 'Resolución mínima',
+                'value' => ($photoMeta['dimensions']['width'] ?? 0) >= 600 && ($photoMeta['dimensions']['height'] ?? 0) >= 800 ? 'Cumple' : 'No cumple',
+                'confidence' => 90,
+            ];
+            $fields[] = [
+                'key' => 'vertical_ratio',
+                'label' => 'Proporción vertical',
+                'value' => ($photoMeta['ratio'] ?? 0) >= 0.7 && ($photoMeta['ratio'] ?? 0) <= 0.95 ? 'Correcta' : 'Incorrecta',
+                'confidence' => 80,
+            ];
+            $fields[] = [
+                'key' => 'face_hint',
+                'label' => 'Rostro visible (básico)',
+                'value' => $photoMeta['face_hint'] ?? 'No detectado',
+                'confidence' => 60,
+            ];
+            return $fields;
+        }
+
+        // CERTIFICADO SISBEN
+        if ($documentCode === 'sisben_certificate') {
+            $fields[] = [
+                'key' => 'nombre',
+                'label' => 'Nombre',
+                'value' => $commonName ?? ($user['full_name'] ?? null),
+                'confidence' => 75,
+            ];
+            $fields[] = [
+                'key' => 'puntaje',
+                'label' => 'Puntaje SISBEN',
+                'value' => $this->matchRegex($ocrText, '/puntaje[:\s]+([0-9]{1,3}(?:[\.,][0-9]{1,2})?)/iu'),
+                'confidence' => 80,
+            ];
+            $fields[] = [
+                'key' => 'grupo',
+                'label' => 'Grupo',
+                'value' => $this->matchRegex($ocrText, '/grupo[:\s]+([ABCDEF][0-9]?)/iu'),
+                'confidence' => 80,
+            ];
+            $fields[] = [
+                'key' => 'municipio',
+                'label' => 'Municipio',
+                'value' => $this->matchRegex($ocrText, '/municipio[:\s]+([A-ZÁÉÍÓÚÑ ]{3,})/iu'),
+                'confidence' => 60,
+            ];
+            return $fields;
+        }
+
+        // SERVICIOS PÚBLICOS
+        if ($documentCode === 'utility_bill') {
+            $direccion = $this->extractUtilityAddress($ocrText);
+            $barrio = $this->extractUtilityNeighborhood($ocrText);
+            $total = $this->extractUtilityTotalAmount($ocrText);
+            $fields[] = [
+                'key' => 'direccion',
+                'label' => 'Dirección',
+                'value' => $direccion,
+                'confidence' => $direccion !== null ? 85 : 60,
+            ];
+            $fields[] = [
+                'key' => 'estrato',
+                'label' => 'Estrato',
+                'value' => $this->matchRegex($ocrText, '/estrato[:\s]+([0-6])/iu'),
+                'confidence' => 80,
+            ];
+            $fields[] = [
+                'key' => 'barrio',
+                'label' => 'Barrio',
+                'value' => $barrio,
+                'confidence' => $barrio !== null ? 75 : 45,
+            ];
+            $fields[] = [
+                'key' => 'total_factura',
+                'label' => 'Valor total a pagar',
+                'value' => $total,
+                'confidence' => $total !== null ? 92 : 55,
+            ];
+            $fields[] = [
+                'key' => 'nombre_titular',
+                'label' => 'Nombre titular',
+                'value' => $commonName ?? ($user['full_name'] ?? null),
+                'confidence' => 70,
+            ];
+            $fields[] = [
+                'key' => 'empresa_servicios',
+                'label' => 'Empresa de servicios',
+                'value' => $this->matchRegex($ocrText, '/empresa[:\s]+([A-ZÁÉÍÓÚÑ0-9 ]{3,})/iu') ?? $this->matchRegex($ocrText, '/(acueducto|energ[íi]a|gas|emcali|epm|codensa|enel|emcartago|emserpa|emdupar|emdupar|emdupar|emdupar)/iu'),
+                'confidence' => 60,
+            ];
+            return $fields;
+        }
+
+        // Documento de identidad (por compatibilidad)
         if ($documentCode === 'identity_document') {
             $identity = $this->extractIdentityDocumentFields($ocrText, $hints, $user);
             return [
@@ -818,57 +1089,14 @@ class DocumentIntelligenceService
             ];
         }
 
-        $profiles = [
-            'identity_document' => [
-                ['key' => 'full_name', 'label' => 'Nombre completo', 'value' => $commonName ?? ($user['full_name'] ?? null), 'confidence' => 72],
-                ['key' => 'document_number', 'label' => 'Número de documento', 'value' => $commonDoc ?? ($user['document_number'] ?? null), 'confidence' => 78],
-                ['key' => 'birth_date', 'label' => 'Fecha de nacimiento', 'value' => $commonDate, 'confidence' => 55],
-                ['key' => 'sex', 'label' => 'Sexo', 'value' => $this->matchRegex($ocrText, '/\b(MASCULINO|FEMENINO|M|F)\b/iu'), 'confidence' => 50],
-                ['key' => 'expedition_place', 'label' => 'Lugar de expedición', 'value' => $this->matchRegex($ocrText, '/expedici[oó]n[:\s]+([A-ZÁÉÍÓÚÑ ,.-]{3,})/iu'), 'confidence' => 45],
-            ],
-            'graduation_act' => [
-                ['key' => 'student_name', 'label' => 'Nombre del estudiante', 'value' => $commonName ?? ($user['full_name'] ?? null), 'confidence' => 72],
-                ['key' => 'institution', 'label' => 'Institución educativa', 'value' => $this->matchRegex($ocrText, '/instituci[oó]n(?: educativa)?[:\s]+([A-ZÁÉÍÓÚÑ0-9 ,.-]{3,})/iu'), 'confidence' => 55],
-                ['key' => 'graduation_date', 'label' => 'Fecha de graduación', 'value' => $commonDate, 'confidence' => 45],
-                ['key' => 'degree_title', 'label' => 'Título obtenido', 'value' => $this->matchRegex($ocrText, '/t[ií]tulo[:\s]+([A-ZÁÉÍÓÚÑ0-9 ,.-]{3,})/iu'), 'confidence' => 55],
-            ],
-            'saber_11' => [
-                ['key' => 'student_name', 'label' => 'Nombre del estudiante', 'value' => $commonName ?? ($user['full_name'] ?? null), 'confidence' => 72],
-                ['key' => 'global_score', 'label' => 'Puntaje global', 'value' => $this->matchRegex($ocrText, '/puntaje global[:\s]+([0-9]{2,3}(?:[\.,][0-9]{1,2})?)/iu'), 'confidence' => 76],
-                ['key' => 'results', 'label' => 'Resultados individuales', 'value' => $this->matchRegex($ocrText, '/(lectura critica|matematicas|sociales|naturales|ingles)/iu'), 'confidence' => 42],
-                ['key' => 'presentation_year', 'label' => 'Año de presentación', 'value' => $this->matchRegex($ocrText, '/(20[0-9]{2})/iu'), 'confidence' => 52],
-            ],
-            'portrait_photo' => [
-                ['key' => 'face_validity', 'label' => 'Validación de rostro', 'value' => $photoMeta['face_hint'] ?? 'No disponible', 'confidence' => 60],
-                ['key' => 'image_dimensions', 'label' => 'Dimensiones', 'value' => $photoMeta['dimensions'] ? ($photoMeta['dimensions']['width'] . 'x' . $photoMeta['dimensions']['height']) : null, 'confidence' => 40],
-                ['key' => 'quality', 'label' => 'Calidad mínima', 'value' => $photoMeta['quality_bonus'] >= 0 ? 'Apta preliminarmente' : 'Requiere revisión', 'confidence' => 55],
-            ],
-            'sisben_certificate' => [
-                ['key' => 'sisben_score', 'label' => 'Puntaje SISBÉN', 'value' => $this->matchRegex($ocrText, '/puntaje[:\s]+([0-9]{1,3}(?:[\.,][0-9]{1,2})?)/iu'), 'confidence' => 70],
-                ['key' => 'group', 'label' => 'Grupo', 'value' => $this->matchRegex($ocrText, '/grupo[:\s]+([ABCDEF][0-9]?)/iu'), 'confidence' => 72],
-                ['key' => 'beneficiary_name', 'label' => 'Nombre del beneficiario', 'value' => $commonName ?? ($user['full_name'] ?? null), 'confidence' => 68],
-            ],
-            'utility_bill' => [
-                ['key' => 'address', 'label' => 'Dirección', 'value' => $this->matchRegex($ocrText, '/direcci[oó]n[:\s]+([A-ZÁÉÍÓÚÑ0-9 #.-]{5,})/iu'), 'confidence' => 66],
-                ['key' => 'stratum', 'label' => 'Estrato', 'value' => $this->matchRegex($ocrText, '/estrato[:\s]+([0-6])/iu'), 'confidence' => 72],
-                ['key' => 'holder_name', 'label' => 'Nombre del titular', 'value' => $commonName ?? ($user['full_name'] ?? null), 'confidence' => 65],
-            ],
+        // Fallback
+        $fields[] = [
+            'key' => 'raw_text_excerpt',
+            'label' => 'Extracto OCR',
+            'value' => mb_substr($ocrText, 0, 240),
+            'confidence' => 35,
+            'source' => 'ocr',
         ];
-
-        foreach ($profiles[$documentCode] ?? [] as $field) {
-            $fields[] = $field;
-        }
-
-        if (!$fields) {
-            $fields[] = [
-                'key' => 'raw_text_excerpt',
-                'label' => 'Extracto OCR',
-                'value' => mb_substr($ocrText, 0, 240),
-                'confidence' => 35,
-                'source' => 'ocr',
-            ];
-        }
-
         return $fields;
     }
 
@@ -1003,17 +1231,24 @@ class DocumentIntelligenceService
         foreach ($fields as $field) {
             $key = $field['key'] ?? '';
             if (in_array($key, ['full_name', 'student_name', 'beneficiary_name'], true)) {
-                $fieldValue = $this->normalize((string)($field['value'] ?? ''));
-                $userName = $this->normalize((string)($user['full_name'] ?? ''));
-                if ($fieldValue !== '' && $userName !== '' && $this->similarity($fieldValue, $userName) >= 0.72) {
+                $fieldValue = $this->normalizePersonLikeValue((string)($field['value'] ?? ''));
+                $userName = $this->normalizePersonLikeValue((string)($user['full_name'] ?? ''));
+                if ($fieldValue !== '' && $userName !== '' && $this->similarity($fieldValue, $userName) >= 0.62) {
                     $nameMatch = true;
                 } elseif ($fieldValue !== '' && $userName !== '') {
                     $observations[] = 'El nombre extraído no coincide del todo con el perfil del estudiante.';
                 }
             }
 
-            if ($key === 'document_number' && !empty($field['value']) && !empty($user['document_number']) && (string)$field['value'] !== (string)$user['document_number']) {
+            if ($key === 'document_number' && !empty($field['value']) && !empty($user['document_number'])) {
+                $ocrDoc = preg_replace('/\D+/', '', (string)$field['value']) ?? '';
+                $userDoc = preg_replace('/\D+/', '', (string)$user['document_number']) ?? '';
+                $sameDoc = ($ocrDoc !== '' && $ocrDoc === $userDoc)
+                    || ($ocrDoc !== '' && $userDoc !== '' && str_ends_with($ocrDoc, substr($userDoc, -6)))
+                    || ($ocrDoc !== '' && $userDoc !== '' && str_ends_with($userDoc, substr($ocrDoc, -6)));
+                if (!$sameDoc) {
                 $observations[] = 'El número de documento no coincide con el usuario autenticado.';
+                }
             }
         }
 
@@ -1074,15 +1309,15 @@ class DocumentIntelligenceService
             return ['code' => 'requiere_revision', 'label' => 'Requiere revisión'];
         }
 
-        if ($confidence >= (float)($this->config['app']['analysis']['min_confidence'] ?? 70) && $quality >= 55) {
+        if ($confidence >= 80.0 && $quality >= 45) {
             return ['code' => 'validado_automaticamente', 'label' => 'Validado automáticamente'];
         }
 
-        if ($confidence < 45 || $quality < 55) {
+        if ($confidence >= 50.0) {
             return ['code' => 'requiere_revision', 'label' => 'Requiere revisión'];
         }
 
-        return ['code' => 'pendiente', 'label' => 'Pendiente'];
+        return ['code' => 'documento_ilegible', 'label' => 'Documento ilegible'];
     }
 
     private function mergeObservations(array $first, array $second): array
@@ -1092,11 +1327,184 @@ class DocumentIntelligenceService
 
     private function normalize(string $text): string
     {
+        $text = $this->normalizeOcrText($text);
         $text = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text) ?: $text;
         $text = strtolower($text);
         $text = preg_replace('/[^a-z0-9\s]+/i', ' ', $text) ?? $text;
         $text = preg_replace('/\s+/', ' ', $text) ?? $text;
         return trim($text);
+    }
+
+    private function normalizeOcrText(string $text): string
+    {
+        $text = str_replace(["\r\n", "\r"], "\n", $text);
+        $text = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]+/', ' ', $text) ?? $text;
+        $text = str_replace(['|', '¦', '¨', '´', '`'], ' ', $text);
+
+        // Correcciones OCR comunes para tokens alfabéticos.
+        $text = preg_replace_callback('/\b[\p{L}\d]{2,}\b/u', function (array $m): string {
+            $token = $m[0];
+            $letters = preg_match_all('/[\p{L}]/u', $token) ?: 0;
+            $digits = preg_match_all('/\d/u', $token) ?: 0;
+            if ($digits === 0 || $letters === 0 || $digits > $letters) {
+                return $token;
+            }
+
+            return strtr($token, [
+                '0' => 'O',
+                '1' => 'I',
+                '4' => 'A',
+                '5' => 'S',
+            ]);
+        }, $text) ?? $text;
+
+        $text = preg_replace('/[ ]{2,}/', ' ', $text) ?? $text;
+        $text = preg_replace('/\n{3,}/', "\n\n", $text) ?? $text;
+        return trim($text);
+    }
+
+    private function normalizePersonLikeValue(string $text): string
+    {
+        $text = strtoupper($this->normalizeOcrText($text));
+        $text = preg_replace('/[^A-ZÁÉÍÓÚÑ ]+/u', ' ', $text) ?? $text;
+        $text = preg_replace('/\s+/', ' ', $text) ?? $text;
+        return trim($text);
+    }
+
+    private function fuzzyContains(string $text, string $keyword, float $threshold = 0.82): bool
+    {
+        if ($keyword === '' || $text === '') {
+            return false;
+        }
+
+        if (str_contains($text, $keyword)) {
+            return true;
+        }
+
+        $keywordTokens = preg_split('/\s+/', $keyword) ?: [];
+        $textTokens = preg_split('/\s+/', $text) ?: [];
+        if (empty($keywordTokens) || empty($textTokens)) {
+            return false;
+        }
+
+        foreach ($keywordTokens as $needle) {
+            if ($needle === '' || strlen($needle) < 4) {
+                continue;
+            }
+
+            foreach ($textTokens as $token) {
+                if (abs(strlen($token) - strlen($needle)) > 2) {
+                    continue;
+                }
+
+                if ($this->similarity($token, $needle) >= $threshold) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function analyzeDocumentStructure(string $code, string $normalizedText): array
+    {
+        $rules = [
+            'identity_document' => ['cedula', 'republica de colombia', 'sexo', 'nacimiento', 'expedicion'],
+            'saber_11' => ['icfes', 'saber 11', 'puntaje', 'resultado', 'percentil'],
+            'utility_bill' => ['factura', 'estrato', 'direccion', 'suscriptor', 'servicios'],
+            'sisben_certificate' => ['sisben', 'grupo', 'puntaje', 'municipio', 'beneficiario'],
+            'graduation_act' => ['acta de grado', 'institucion educativa', 'bachiller', 'titulo', 'otorga'],
+        ];
+
+        $keywords = $rules[$code] ?? [];
+        if (empty($keywords)) {
+            return ['score' => 0.0, 'signals' => []];
+        }
+
+        $hits = 0;
+        $signals = [];
+        foreach ($keywords as $kw) {
+            $needle = $this->normalize($kw);
+            if ($this->fuzzyContains($normalizedText, $needle, 0.8)) {
+                $hits++;
+                $signals[] = $kw;
+            }
+        }
+
+        $score = min(28.0, $hits * 6.0);
+        return ['score' => $score, 'signals' => $signals];
+    }
+
+    private function computeIntelligentScore(
+        string $expectedCode,
+        string $detectedCode,
+        array $candidates,
+        array $fields,
+        int $quality,
+        array $comparison,
+        string $normalizedText
+    ): array {
+        $score = 0.0;
+        $observations = [];
+        $parts = [];
+
+        if ($expectedCode !== '' && $detectedCode === $expectedCode) {
+            $score += 40;
+            $parts['document_type'] = 40;
+        } elseif ($expectedCode !== '' && (float)($candidates[$expectedCode] ?? 0) >= 35.0) {
+            $score += 22;
+            $parts['document_type'] = 22;
+            $observations[] = 'Tipo documental compatible de forma parcial.';
+        } else {
+            $parts['document_type'] = 0;
+            $observations[] = 'Tipo documental con baja evidencia.';
+        }
+
+        $namePoints = !empty($comparison['name_match']) ? 20 : 0;
+        $score += $namePoints;
+        $parts['name_match'] = $namePoints;
+
+        $fieldMap = [];
+        foreach ($fields as $field) {
+            $fieldMap[(string)($field['key'] ?? '')] = $field['value'] ?? null;
+        }
+
+        $validDoc = false;
+        if (!empty($fieldMap['document_number'])) {
+            $digits = preg_replace('/\D+/', '', (string)$fieldMap['document_number']) ?? '';
+            $validDoc = strlen($digits) >= 7;
+        }
+        $docPoints = $validDoc ? 20 : 0;
+        $score += $docPoints;
+        $parts['document_number'] = $docPoints;
+
+        $validDate = !empty($fieldMap['birth_date']) || !empty($fieldMap['graduation_date']) || !empty($this->matchDate($normalizedText));
+        $datePoints = $validDate ? 10 : 0;
+        $score += $datePoints;
+        $parts['date'] = $datePoints;
+
+        $keywordsPoints = 0;
+        $mainKeywords = ['icfes', 'saber 11', 'cedula', 'factura', 'sisben', 'estrato', 'puntaje', 'grupo'];
+        foreach ($mainKeywords as $kw) {
+            if ($this->fuzzyContains($normalizedText, $this->normalize($kw), 0.8)) {
+                $keywordsPoints += 2;
+            }
+        }
+        $keywordsPoints = min(10, $keywordsPoints);
+        $score += $keywordsPoints;
+        $parts['keywords'] = $keywordsPoints;
+
+        $qualityPoints = (int)round(max(0, min(10, $quality / 10)));
+        $score += $qualityPoints;
+        $parts['ocr_quality'] = $qualityPoints;
+
+        $score = max(0.0, min(100.0, $score));
+
+        return [
+            'score' => round($score, 2),
+            'parts' => $parts,
+            'observations' => array_values(array_unique($observations)),
+        ];
     }
 
     private function humanizeCode(string $code): string
@@ -1110,6 +1518,11 @@ class DocumentIntelligenceService
             return trim($matches[1]);
         }
 
+        $normalized = $this->normalizeOcrText($text);
+        if ($normalized !== $text && preg_match($pattern, $normalized, $matches)) {
+            return trim($matches[1]);
+        }
+
         return null;
     }
 
@@ -1120,6 +1533,168 @@ class DocumentIntelligenceService
         }
 
         return null;
+    }
+
+    private function containsKeyword(string $text, string $keyword): bool
+    {
+        $normalizedText = $this->normalize($text);
+        $normalizedKeyword = $this->normalize($keyword);
+        return str_contains($normalizedText, $normalizedKeyword) || $this->fuzzyContains($normalizedText, $normalizedKeyword, 0.8);
+    }
+
+    private function extractSaberGlobalScore(string $text): ?string
+    {
+        $normalized = $this->normalizeOcrText($text);
+
+        if (preg_match('/\b(\d{2,3})\s*\/\s*500\b/u', $normalized, $m)) {
+            return $m[1];
+        }
+
+        if (preg_match('/puntaj\s*e?\s*global[^\d]{0,40}(\d{2,3})\b/iu', $normalized, $m)) {
+            return $m[1];
+        }
+
+        if (preg_match('/\bglobal[^\d]{0,20}(\d{2,3})\b/iu', $normalized, $m)) {
+            return $m[1];
+        }
+
+        return null;
+    }
+
+    private function extractUtilityAddress(string $text): ?string
+    {
+        $normalized = $this->normalizeOcrText($text);
+
+        $address = $this->matchRegex($normalized, '/direcci[oó]n\s+(?:prestaci[oó]n\s+servicio|de\s+cobro)[:\s\-]*([^\n]{8,120})/iu');
+        if ($address !== null) {
+            $address = preg_replace('/\s+municipio\s*:.*/iu', '', $address) ?? $address;
+            return trim($address);
+        }
+
+        $address = $this->matchRegex($normalized, '/\b((?:cr|cra|cl|calle|carrera)\s*[0-9a-z\-\s#]{6,80})/iu');
+        return $address !== null ? trim($address) : null;
+    }
+
+    private function extractUtilityNeighborhood(string $text): ?string
+    {
+        $normalized = $this->normalizeOcrText($text);
+
+        $barrio = $this->matchRegex($normalized, '/barrio[:\s\-]*([a-záéíóúñ0-9\-\s]{3,60})/iu');
+        if ($barrio !== null) {
+            return trim($barrio);
+        }
+
+        return null;
+    }
+
+    private function extractUtilityTotalAmount(string $text): ?string
+    {
+        $normalized = $this->normalizeOcrText($text);
+
+        preg_match_all('/(?:valor\s+total\s+a\s+pagar|total\s+a\s+pagar)/iu', $normalized, $anchors, PREG_OFFSET_CAPTURE);
+        preg_match_all('/\$\s*([0-9][0-9\.,]{2,})/u', $normalized, $amounts, PREG_OFFSET_CAPTURE);
+
+        $anchorOffsets = array_map(static fn(array $m): int => (int)$m[1], $anchors[0] ?? []);
+        $amountMatches = $amounts[1] ?? [];
+
+        $bestValue = null;
+        $bestDistance = PHP_INT_MAX;
+        $bestAmount = -1.0;
+
+        foreach ($amountMatches as $amountMatch) {
+            $raw = (string)$amountMatch[0];
+            $offset = (int)$amountMatch[1];
+            $money = $this->normalizeMoneyValue($raw);
+            $numeric = $this->moneyToFloat($money);
+            if ($numeric <= 0) {
+                continue;
+            }
+
+            $distance = PHP_INT_MAX;
+            foreach ($anchorOffsets as $anchor) {
+                $d = abs($offset - $anchor);
+                if ($d < $distance) {
+                    $distance = $d;
+                }
+            }
+
+            if (empty($anchorOffsets)) {
+                $distance = 99999;
+            }
+
+            if ($distance <= 260) {
+                if ($distance < $bestDistance || ($distance === $bestDistance && $numeric > $bestAmount)) {
+                    $bestDistance = $distance;
+                    $bestAmount = $numeric;
+                    $bestValue = $money;
+                }
+            }
+        }
+
+        if ($bestValue !== null) {
+            return $bestValue;
+        }
+
+        $candidateLines = preg_split('/\r\n|\r|\n/', $normalized) ?: [];
+        $bestValue = null;
+        $bestScore = -1;
+
+        foreach ($candidateLines as $line) {
+            $lineNorm = $this->normalize($line);
+            if (!str_contains($lineNorm, 'total a pagar') && !str_contains($lineNorm, 'valor total a pagar')) {
+                continue;
+            }
+
+            if (preg_match('/\$\s*([0-9][0-9\.,]{2,})/u', $line, $m)) {
+                $money = $this->normalizeMoneyValue($m[1]);
+                $numeric = $this->moneyToFloat($money);
+                if ($numeric > $bestScore) {
+                    $bestScore = $numeric;
+                    $bestValue = $money;
+                }
+            }
+        }
+
+        if ($bestValue !== null) {
+            return $bestValue;
+        }
+
+        return null;
+    }
+
+    private function normalizeMoneyValue(string $value): string
+    {
+        $value = preg_replace('/[^0-9\.,]/', '', $value) ?? $value;
+        $value = trim($value);
+        if (preg_match('/^\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?$/', $value)) {
+            return str_replace(',', '.', $value);
+        }
+
+        if (preg_match('/^\d+(?:,\d{1,2})$/', $value)) {
+            return str_replace(',', '.', $value);
+        }
+
+        return $value;
+    }
+
+    private function moneyToFloat(string $value): float
+    {
+        $raw = str_replace('.', '', $value);
+        $raw = str_replace(',', '.', $raw);
+        return (float)$raw;
+    }
+
+    private function extractLikelyYear(string $text): ?string
+    {
+        $normalized = $this->normalizeOcrText($text);
+        preg_match_all('/\b(20\d{2})\b/u', $normalized, $matches);
+        $years = array_map('intval', $matches[1] ?? []);
+        $years = array_filter($years, static fn(int $y): bool => $y >= 2010 && $y <= 2100);
+        if (empty($years)) {
+            return null;
+        }
+
+        return (string)max($years);
     }
 
     private function similarity(string $a, string $b): float

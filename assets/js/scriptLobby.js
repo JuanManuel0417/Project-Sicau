@@ -39,8 +39,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             bienvenida.textContent = "Hola " + primerNombre + ", Bienvenido a SICAU!!!";
         }
 
-        const ccAleatoria = Math.floor(Math.random() * (9999999999 - 100000 + 1)) + 100000;
-        $('.estudiante-nombre').text(limpio + " - " + ccAleatoria + " C.C.");
+        const documentNumber = data.user.document_number ? data.user.document_number : null;
+        $('.estudiante-nombre').text(limpio + (documentNumber ? ' - ' + documentNumber + ' C.C.' : ''));
     }
 
     let logoutBtn = document.querySelector(".logout-line a");

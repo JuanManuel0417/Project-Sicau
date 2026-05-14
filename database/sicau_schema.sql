@@ -209,7 +209,7 @@ INSERT IGNORE INTO document_types (name, code, description, required_for_role, m
 INSERT IGNORE INTO users (role_id, email, username, password_hash, full_name, document_number, program, status) VALUES
 (3, 'admin@cas.edu', 'admin', '$2y$10$ZIrkrghQO1bZ0yx6DXW6aOBk7mw4uBLcATgh1mGvGbKscL72Z8uWy', 'Administrador SICAU', '0000000000', 'Gestión Documental', 'activo'),
 (1, 'estudiante@cas.edu', 'estudiante', '$2y$10$ZIrkrghQO1bZ0yx6DXW6aOBk7mw4uBLcATgh1mGvGbKscL72Z8uWy', 'Estudiante Ejemplo', '1234567890', 'Ingeniería de Software', 'activo'),
-(1, 'juan.gonzalez308@pascualbravo.edu.co', 'juan.gonzalez308', '$2y$10$oSTZA629U/V01aD7cTi8iuGyR5ToNG2dV4psHMEsVMRvGJYWs4wBK', 'Juan González', '3080000000', 'Ingeniería de Software', 'activo'),
+(1, 'juan.gonzalez308@pascualbravo.edu.co', 'juan.gonzalez308', '$2y$10$oSTZA629U/V01aD7cTi8iuGyR5ToNG2dV4psHMEsVMRvGJYWs4wBK', 'Juan González', '1114153308', 'Ingeniería de Software', 'activo'),
 (3, 'administrador@pascualbravo.edu.co', 'administrador', '$2y$10$oSTZA629U/V01aD7cTi8iuGyR5ToNG2dV4psHMEsVMRvGJYWs4wBK', 'Administrador SICAU', '0000000001', 'Gestión Documental', 'activo');
 
 INSERT IGNORE INTO validation_rules (document_type_id, rule_type, rule_value, message, active) VALUES
