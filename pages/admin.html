@@ -6,16 +6,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>SICAU | Panel Administrativo</title>
-    <link rel="icon" type="image/x-icon" href="/Project-Sicau/assets/img/iupb.ico">
+    <link rel="icon" type="image/x-icon" href="../assets/img/iupb.ico">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="/Project-Sicau/assets/css/styleAdmin.css">
+    <link rel="stylesheet" href="../assets/css/styleAdmin.css">
 </head>
 
 <body class="admin-shell">
+
+    <!-- Barra de carga global -->
+    <div class="page-loader" id="pageLoader"></div>
+
+    <!-- Toast container (JS lo inyecta, pero lo pre-declaramos por si acaso) -->
+    <div id="toast-container"></div>
+
+    <!-- ── Topbar ─────────────────────────────── -->
     <div class="admin-topbar">
         <div>
             <div class="eyebrow">SICAU · Validación documental inteligente</div>
@@ -23,12 +31,19 @@
             <p>Supervisión automática, revisión manual y trazabilidad completa de cada documento.</p>
         </div>
         <div class="admin-topbar-actions">
-            <a href="/Project-Sicau/pages/lobby.html" class="btn btn-ghost"><i class="fa-solid fa-house"></i> Lobby</a>
-            <button class="btn btn-ghost" id="btnReloadAdmin"><i class="fa-solid fa-rotate"></i> Recargar</button>
-            <button class="btn btn-danger" id="btnLogoutAdmin"><i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión</button>
+            <a href="../pages/lobby.html" class="btn btn-ghost">
+                <i class="fa-solid fa-house"></i> Lobby
+            </a>
+            <button class="btn btn-ghost" id="btnReloadAdmin">
+                <i class="fa-solid fa-rotate"></i> Recargar
+            </button>
+            <button class="btn btn-danger" id="btnLogoutAdmin">
+                <i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión
+            </button>
         </div>
     </div>
 
+    <!-- ── Estadísticas ───────────────────────── -->
     <section class="stats-grid">
         <article class="stat-card stat-primary">
             <span>Total de documentos</span>
@@ -57,6 +72,7 @@
         </article>
     </section>
 
+    <!-- ── Distribución por estado ───────────── -->
     <section class="state-summary panel">
         <div class="panel-head">
             <div>
@@ -64,18 +80,28 @@
                 <p>Lectura rápida del comportamiento documental actual.</p>
             </div>
         </div>
-        <div id="stateSummaryList" class="state-summary-list"></div>
+        <div id="stateSummaryList" class="state-summary-list">
+            <!-- skeletons iniciales -->
+            <div class="skeleton skeleton-row"></div>
+            <div class="skeleton skeleton-row"></div>
+            <div class="skeleton skeleton-row"></div>
+        </div>
     </section>
 
+    <!-- ── Grilla principal ───────────────────── -->
     <section class="content-grid">
+
+        <!-- Panel izquierdo: tabla de documentos -->
         <div class="panel panel-left">
             <div class="panel-head">
                 <div>
                     <h2>Documentos registrados</h2>
-                    <p>Filtra por estudiante, tipo o estado para revisar rápidamente la cola documental.</p>
+                    <p>Filtra por estudiante, tipo o estado para revisar la cola documental.</p>
                 </div>
                 <div class="panel-actions">
-                    <input type="search" class="form-control" id="searchDocuments" placeholder="Buscar estudiante, correo o documento">
+                    <input type="search" class="form-control" id="searchDocuments"
+                        placeholder="&#xf002; Buscar estudiante, correo o documento" autocomplete="off"
+                        spellcheck="false">
                     <select class="form-control" id="stateFilter">
                         <option value="">Todos los estados</option>
                     </select>
@@ -94,18 +120,22 @@
                         </tr>
                     </thead>
                     <tbody id="adminDocumentsBody">
-                        <tr><td colspan="5" class="text-center muted-row">Cargando documentos...</td></tr>
+                        <tr>
+                            <td colspan="5" class="text-center muted-row">Cargando documentos…</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
+        <!-- Panel derecho: detalle del documento -->
         <aside class="panel panel-right">
             <div class="detail-hero">
                 <div>
                     <div class="eyebrow">Detalle del análisis</div>
                     <h2 id="detailStudentName">Selecciona un documento</h2>
-                    <p id="detailDocumentMeta">Aquí verás la validación automática, los campos extraídos y el historial.</p>
+                    <p id="detailDocumentMeta">Aquí verás la validación automática, los campos extraídos y el historial.
+                    </p>
                 </div>
                 <div class="detail-badge" id="detailStateBadge">Sin selección</div>
             </div>
@@ -117,38 +147,60 @@
 
             <div class="detail-block">
                 <h3>Comparación</h3>
-                <div id="comparisonList" class="comparison-list"></div>
+                <div id="comparisonList" class="comparison-list">
+                    <div class="empty-state">Selecciona un documento para comparar datos.</div>
+                </div>
             </div>
 
             <div class="detail-block">
                 <h3>Campos extraídos</h3>
-                <div id="fieldsList" class="data-list"></div>
+                <div id="fieldsList" class="data-list">
+                    <div class="empty-state">Sin campos extraídos todavía.</div>
+                </div>
             </div>
 
             <div class="detail-block">
                 <h3>Historial</h3>
-                <div id="historyList" class="data-list timeline-list"></div>
+                <div id="historyList" class="data-list timeline-list">
+                    <div class="empty-state">Sin historial disponible.</div>
+                </div>
             </div>
 
             <div class="detail-block">
                 <h3>Observaciones</h3>
-                <div id="observationsList" class="data-list"></div>
+                <div id="observationsList" class="data-list">
+                    <div class="empty-state">Sin observaciones registradas.</div>
+                </div>
             </div>
 
             <div class="detail-block preview-block">
                 <h3>Vista previa</h3>
-                <iframe id="documentPreview" title="Vista previa del documento"></iframe>
+                <!-- Placeholder visible hasta que se cargue el iframe -->
+                <div class="preview-placeholder" id="previewPlaceholder">
+                    <i class="fa-regular fa-file-pdf"></i>
+                    <span>Selecciona un documento para previsualizarlo</span>
+                </div>
+                <iframe id="documentPreview" title="Vista previa del documento" style="display:none;"></iframe>
             </div>
 
             <div class="review-block">
                 <label for="reviewStateSelect">Nuevo estado manual</label>
                 <select id="reviewStateSelect" class="form-control"></select>
-                <textarea id="reviewComment" class="form-control" rows="3" placeholder="Comentario administrativo"></textarea>
+                <textarea id="reviewComment" class="form-control" rows="3"
+                    placeholder="Agrega un comentario administrativo (opcional)…"></textarea>
                 <div class="review-actions">
-                    <button class="btn btn-info" id="btnReanalyzeDocument"><i class="fa-solid fa-rotate"></i> Reanalizar</button>
-                    <button class="btn btn-success" id="btnApproveDocument"><i class="fa-solid fa-check"></i> Aprobar</button>
-                    <button class="btn btn-danger" id="btnRejectDocument"><i class="fa-solid fa-xmark"></i> Rechazar</button>
-                    <button class="btn btn-default" id="btnApplyReview"><i class="fa-solid fa-floppy-disk"></i> Guardar revisión</button>
+                    <button class="btn btn-info" id="btnReanalyzeDocument">
+                        <i class="fa-solid fa-rotate"></i> Reanalizar
+                    </button>
+                    <button class="btn btn-success" id="btnApproveDocument">
+                        <i class="fa-solid fa-check"></i> Aprobar
+                    </button>
+                    <button class="btn btn-danger" id="btnRejectDocument">
+                        <i class="fa-solid fa-xmark"></i> Rechazar
+                    </button>
+                    <button class="btn btn-default" id="btnApplyReview">
+                        <i class="fa-solid fa-floppy-disk"></i> Guardar revisión
+                    </button>
                 </div>
             </div>
         </aside>
@@ -156,7 +208,21 @@
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-    <script src="/Project-Sicau/assets/js/scriptAdmin.js"></script>
+    <script>
+        // Mostrar/ocultar iframe vs placeholder al cargar vista previa
+        $(document).on('DOMContentLoaded', function () { });
+        // Hook para manejar el iframe de preview
+        $(document).ready(function () {
+            $('#documentPreview').on('load', function () {
+                if ($(this).attr('src')) {
+                    $('#previewPlaceholder').hide();
+                    $(this).show().addClass('loaded');
+                }
+            });
+            // Si no hay src, mantener placeholder
+        });
+    </script>
+    <script src="../assets/js/scriptAdmin.js"></script>
 </body>
 
 </html>
