@@ -25,6 +25,7 @@ require_once __DIR__ . '/app/Models/ValidationRule.php';
 require_once __DIR__ . '/app/Models/Permission.php';
 
 require_once __DIR__ . '/app/Services/DocumentIntelligenceService.php';
+require_once __DIR__ . '/app/Services/DatabaseSeeder.php';
 
 use App\Core\Request;
 use App\Core\Router;
@@ -32,8 +33,12 @@ use App\Core\Session;
 use App\Controllers\AuthController;
 use App\Controllers\DocumentController;
 use App\Controllers\AdminController;
+use App\Services\DatabaseSeeder;
 
 Session::start();
+
+$config = include __DIR__ . '/config/config.php';
+DatabaseSeeder::seed($config);
 
 $request = new Request();
 $router = new Router();

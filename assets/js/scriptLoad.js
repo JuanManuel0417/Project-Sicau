@@ -37,36 +37,40 @@ $(function () {
         tbody.empty();
         let completados = 0;
 
-        documentos.forEach(doc => {
-            const uploaded = doc.uploaded;
-            const tiene = !!uploaded;
-            if (tiene) completados++;
-            const estadoHtml = tiene ? `<span class="status-badge status-valid"><i class="fa fa-check-circle"></i> ${uploaded.state_name}</span>` : `<span class="status-badge status-pending"><i class="fa fa-clock"></i> Pendiente</span>`;
-            const observaciones = tiene ? `<span class="observaciones-text"><i class="fa fa-info-circle"></i> ${uploaded.state_name}</span>` : `<span class="observaciones-text"><i class="fa fa-info-circle"></i> Pendiente de carga</span>`;
-            const archivoInfo = tiene ? `<div class="nombre-archivo-mostrar"><i class="fa fa-paperclip"></i> ${uploaded.original_filename}<br><span class="tamaño-archivo">(${formatBytes(uploaded.file_size)})</span></div>` : `<div class="nombre-archivo-mostrar text-muted">Ningún archivo seleccionado</div>`;
-            const viewButton = tiene ? `<button class="btn btn-xs btn-info btn-view-doc" data-id="${uploaded.id}"><i class="fa fa-eye"></i> Ver</button>` : '';
+        if (documentos.length === 0) {
+            tbody.append('<tr><td colspan="5" class="text-center muted-row">No hay tipos de documento configurados o no hay documentos disponibles para este usuario.</td></tr>');
+        } else {
+            documentos.forEach(doc => {
+                const uploaded = doc.uploaded;
+                const tiene = !!uploaded;
+                if (tiene) completados++;
+                const estadoHtml = tiene ? `<span class="status-badge status-valid"><i class="fa fa-check-circle"></i> ${uploaded.state_name}</span>` : `<span class="status-badge status-pending"><i class="fa fa-clock"></i> Pendiente</span>`;
+                const observaciones = tiene ? `<span class="observaciones-text"><i class="fa fa-info-circle"></i> ${uploaded.state_name}</span>` : `<span class="observaciones-text"><i class="fa fa-info-circle"></i> Pendiente de carga</span>`;
+                const archivoInfo = tiene ? `<div class="nombre-archivo-mostrar"><i class="fa fa-paperclip"></i> ${uploaded.original_filename}<br><span class="tamaño-archivo">(${formatBytes(uploaded.file_size)})</span></div>` : `<div class="nombre-archivo-mostrar text-muted">Ningún archivo seleccionado</div>`;
+                const viewButton = tiene ? `<button class="btn btn-xs btn-info btn-view-doc" data-id="${uploaded.id}"><i class="fa fa-eye"></i> Ver</button>` : '';
 
-            const acceptExtensions = doc.allowed_extensions
-                .split(',')
-                .map(ext => ext.trim())
-                .filter(Boolean)
-                .map(ext => ext.startsWith('.') ? ext : '.' + ext)
-                .join(',');
+                const acceptExtensions = (doc.allowed_extensions || '')
+                    .split(',')
+                    .map(ext => ext.trim())
+                    .filter(Boolean)
+                    .map(ext => ext.startsWith('.') ? ext : '.' + ext)
+                    .join(',');
 
-            const row = `<tr class="documento-row" data-id="${doc.id}">
-                <td><strong>${doc.name}</strong></td>
-                <td>${doc.description}</td>
-                <td>
-                    <input type="file" class="file-input-hidden" id="file-${doc.id}" accept="${acceptExtensions}" style="display:none">
-                    <button class="btn-subir-doc btn btn-sm btn-primary" data-id="${doc.id}"><i class="fa fa-upload"></i> Subir</button>
-                    <button class="btn-buscar btn btn-sm btn-default" data-id="${doc.id}"><i class="fa fa-search"></i> Buscar...</button>
-                    ${archivoInfo}
-                </td>
-                <td class="text-center">${estadoHtml}</td>
-                <td>${observaciones} ${viewButton}</td>
-            </tr>`;
-            tbody.append(row);
-        });
+                const row = `<tr class="documento-row" data-id="${doc.id}">
+                    <td><strong>${doc.name}</strong></td>
+                    <td>${doc.description}</td>
+                    <td>
+                        <input type="file" class="file-input-hidden" id="file-${doc.id}" accept="${acceptExtensions}" style="display:none">
+                        <button class="btn-subir-doc btn btn-sm btn-primary" data-id="${doc.id}"><i class="fa fa-upload"></i> Subir</button>
+                        <button class="btn-buscar btn btn-sm btn-default" data-id="${doc.id}"><i class="fa fa-search"></i> Buscar...</button>
+                        ${archivoInfo}
+                    </td>
+                    <td class="text-center">${estadoHtml}</td>
+                    <td>${observaciones} ${viewButton}</td>
+                </tr>`;
+                tbody.append(row);
+            });
+        }
 
         const porcentaje = documentos.length ? (completados / documentos.length) * 100 : 0;
         $('#progressBar').css('width', porcentaje + '%').text(Math.round(porcentaje) + '%');
@@ -120,8 +124,8 @@ $(function () {
         if (document.getElementById('usuarioNombre')) {
             $('#usuarioNombre').text(user.email);
         }
-        const ccAleatoria = Math.floor(Math.random() * (9999999999 - 100000 + 1)) + 100000;
-        $('.estudiante-nombre').text(user.full_name + ' - ' + ccAleatoria + ' C.C.');
+        const documentNumber = user.document_number ? user.document_number : null;
+        $('.estudiante-nombre').text(user.full_name + (documentNumber ? ' - ' + documentNumber + ' C.C.' : ''));
         await loadDocuments();
     })();
 });

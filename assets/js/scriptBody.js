@@ -11,8 +11,8 @@ $(function () {
         const user = data.user;
         if (user) {
             $('#usuarioNombre').text(user.email);
-            const ccAleatoria = Math.floor(Math.random() * (9999999999 - 100000 + 1)) + 100000;
-            $('.estudiante-nombre').text(user.full_name + " - " + ccAleatoria + " C.C.");
+            const documentNumber = user.document_number ? user.document_number : null;
+            $('.estudiante-nombre').text(user.full_name + (documentNumber ? ' - ' + documentNumber + ' C.C.' : ''));
         }
     }
 

@@ -33,6 +33,7 @@ class AuthController extends Controller
             'id' => $user['id'],
             'email' => $user['email'],
             'full_name' => $user['full_name'],
+            'document_number' => $user['document_number'] ?? null,
             'role_id' => $user['role_id'],
             'role_name' => $user['role_name'] ?? null,
             'role_slug' => $user['role_slug'] ?? null,
